@@ -1,0 +1,9 @@
+# dotenv configuration file
+.env
+
+# IDE configs
+.vscode/
+.idea/
+
+# system files
+.DS_Store
