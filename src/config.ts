@@ -2,6 +2,8 @@ import { loadSync } from "dotenv";
 
 export interface BotConfig {
   TELEGRAM_BOT_TOKEN: string;
+  NOTION_INTEGRATION_TOKEN: string;
+  NOTION_MEMBERS_DB_ID: string;
 }
 
 function loadConfig(): BotConfig {
@@ -10,6 +12,8 @@ function loadConfig(): BotConfig {
 
   const keys = [
     "TELEGRAM_BOT_TOKEN",
+    "NOTION_INTEGRATION_TOKEN",
+    "NOTION_MEMBERS_DB_ID",
   ] as const;
 
   for (const key of keys) {

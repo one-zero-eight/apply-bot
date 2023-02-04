@@ -2,9 +2,12 @@
   "lock": "deno.lock",
   "imports": {
     "@/": "./src/",
+    "async": "https://deno.land/std@0.176.0/async/mod.ts",
     "dotenv": "https://deno.land/std@0.176.0/dotenv/mod.ts",
     "grammy": "https://deno.land/x/grammy@v1.14.1/mod.ts",
-    "grammy-i18n": "https://deno.land/x/grammy_i18n@v1.0.1/mod.ts"
+    "grammy-i18n": "https://deno.land/x/grammy_i18n@v1.0.1/mod.ts",
+    "grammy-parse-mode": "https://deno.land/x/grammy_parse_mode@1.5.0/mod.ts",
+    "notion": "npm:@notionhq/client@2.2.3"
   },
   "fmt": {
     "files": {

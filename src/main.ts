@@ -1,7 +1,9 @@
 import { Bot } from "grammy";
+import { parseMode } from "grammy-parse-mode";
 import type { Ctx } from "./types.ts";
 import { config } from "./config.ts";
 import { i18nMiddleware } from "./plugins/i18n.ts";
+import { o12tMiddleware } from "./plugins/o12t.ts";
 import { handlers } from "./handlers/index.ts";
 
 /**
@@ -10,6 +12,9 @@ import { handlers } from "./handlers/index.ts";
 function runBot() {
   const bot = new Bot<Ctx>(config.TELEGRAM_BOT_TOKEN);
 
+  // use HTML parse mode as default
+  bot.api.config.use(parseMode("HTML"));
+
   // configure graceful shutdown (for more info read the docs)
   // https://grammy.dev/advanced/reliability.html#graceful-shutdown
   Deno.addSignalListener("SIGINT", () => bot.stop());
@@ -17,6 +22,7 @@ function runBot() {
 
   // register middlewares
   bot.use(i18nMiddleware);
+  bot.use(o12tMiddleware);
 
   bot.use(handlers);
 
