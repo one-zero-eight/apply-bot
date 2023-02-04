@@ -1,5 +1,5 @@
 import type { Ctx } from "@/types.ts";
 
-export default async function (ctx: Ctx) {
+export async function helpCmd(ctx: Ctx) {
   await ctx.reply(ctx.t("help-cmd"));
 }
