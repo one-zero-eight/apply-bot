@@ -7,6 +7,8 @@
     "grammy": "https://deno.land/x/grammy@v1.14.1/mod.ts",
     "grammy-i18n": "https://deno.land/x/grammy_i18n@v1.0.1/mod.ts",
     "grammy-parse-mode": "https://deno.land/x/grammy_parse_mode@1.5.0/mod.ts",
+    "grammy-conversations": "https://deno.land/x/grammy_conversations@v1.1.1/mod.ts",
+    "grammy-menu": "https://deno.land/x/grammy_menu@v1.1.2/mod.ts",
     "notion": "npm:@notionhq/client@2.2.3"
   },
   "fmt": {

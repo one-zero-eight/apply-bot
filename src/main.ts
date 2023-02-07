@@ -1,5 +1,6 @@
-import { Bot } from "grammy";
+import { Bot, session } from "grammy";
 import { parseMode } from "grammy-parse-mode";
+import { conversations } from "grammy-conversations";
 import type { Ctx } from "./types.ts";
 import { config } from "./config.ts";
 import { i18nMiddleware } from "./plugins/i18n.ts";
@@ -21,6 +22,25 @@ function runBot() {
   Deno.addSignalListener("SIGTERM", () => bot.stop());
 
   // register middlewares
+  bot.use(session({
+    type: "multi",
+    application: {
+      // store candidate application per user
+      getSessionKey: (ctx) => ctx.from?.id?.toString() ?? "",
+      initial: () => ({
+        fullName: null,
+        skills: null,
+        departmentsChoice: {
+          selected: {},
+          finished: false,
+        },
+        departmentQuestions: {},
+      }),
+    },
+    // storage for conversations plugin
+    conversation: {},
+  }));
+  bot.use(conversations());
   bot.use(i18nMiddleware);
   bot.use(o12tMiddleware);
 

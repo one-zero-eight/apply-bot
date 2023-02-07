@@ -4,10 +4,15 @@ import { startCmd } from "./commands/start.ts";
 import { helpCmd } from "./commands/help.ts";
 import { profileCmd } from "./commands/profile.ts";
 import { unknownCmd } from "./commands/unknown.ts";
+import {
+  composer as candidateApplicationConversation,
+} from "./conversations/candidate-application.ts";
 
 export const handlers = new Composer<Ctx>();
 
 const pm = handlers.filter((ctx) => ctx.chat?.type === "private");
+
+pm.use(candidateApplicationConversation);
 
 const membersPm = pm.filter(async (ctx: Ctx) => (await ctx.o12t.member()) != null);
 membersPm.command("profile", profileCmd);
