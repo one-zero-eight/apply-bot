@@ -5,7 +5,8 @@ export type PropertyType =
   | "checkbox"
   | "url"
   | "select"
-  | "multi_select";
+  | "multi_select"
+  | "date";
 
 // TODO: improve type such that only one property of type "title" is allowed
 export type PropertiesSchema = Record<string, PropertyType>;
@@ -52,20 +53,31 @@ export type MultiSelectPropertyValue = {
   multi_select: Option[];
 };
 
+export type DatePropertyValue = {
+  id: string;
+  type: "date";
+  date: {
+    start: string;
+    end?: string;
+  };
+};
+
 export type Option = {
   id: string;
   name: string;
   color: OptionColor;
 };
 
-export type PropertyValue<T extends PropertyType> = T extends "title"
-  ? TitlePropertyValue
+// deno-fmt-ignore
+export type PropertyValue<T extends PropertyType> =
+    T extends "title" ? TitlePropertyValue
   : T extends "rich_text" ? RichTextPropertyValue
   : T extends "number" ? NumberPropertyValue
   : T extends "checkbox" ? CheckboxPropertyValue
   : T extends "url" ? UrlPropertyValue
   : T extends "select" ? SelectPropertyValue
   : T extends "multi_select" ? MultiSelectPropertyValue
+  : T extends "date" ? DatePropertyValue
   : never;
 
 type _RichText = {
