@@ -12,7 +12,7 @@ export class Notion {
 
   constructor(config: NotionConfig) {
     config = {
-      timeoutMs: 5000,
+      timeoutMs: 6000,
       ...config,
     };
 

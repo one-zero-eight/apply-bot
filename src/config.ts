@@ -4,6 +4,7 @@ export interface BotConfig {
   TELEGRAM_BOT_TOKEN: string;
   NOTION_INTEGRATION_TOKEN: string;
   NOTION_MEMBERS_DB_ID: string;
+  NOTION_CANDIDATES_DB_ID: string;
 }
 
 function loadConfig(): BotConfig {
@@ -14,6 +15,7 @@ function loadConfig(): BotConfig {
     "TELEGRAM_BOT_TOKEN",
     "NOTION_INTEGRATION_TOKEN",
     "NOTION_MEMBERS_DB_ID",
+    "NOTION_CANDIDATES_DB_ID",
   ] as const;
 
   for (const key of keys) {

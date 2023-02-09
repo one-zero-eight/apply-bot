@@ -1,16 +1,18 @@
+import type { NextFunction } from "grammy";
 import type { Ctx } from "@/types.ts";
 
-export async function profileCmd(ctx: Ctx) {
+export async function profileCmd(ctx: Ctx, next: NextFunction) {
   const member = await ctx.o12t.member();
-  if (member) {
+  if (member?.isActive) {
     await ctx.reply(ctx.t("profile-cmd", {
       name: member.fullName,
-      role: member.role ?? "—",
+      role: member.level ?? "—",
       langs: member.speakingLanguages.length > 0
         ? member.speakingLanguages.join(", ")
         : "—",
+      date: member.joined?.toISOString().split("T")[0] ?? "???",
     }));
     return;
   }
-  console.error("/profile: not a member");
+  await next();
 }

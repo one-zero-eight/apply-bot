@@ -2,6 +2,7 @@ import { Composer, Keyboard } from "grammy";
 import { createConversation } from "grammy-conversations";
 import { Menu } from "grammy-menu";
 import { i18nMiddleware } from "@/plugins/i18n.ts";
+import { o12tMiddleware } from "@/plugins/o12t.ts";
 import type { Cnv, Ctx } from "@/types.ts";
 import { QuestionOpen, QuestionSelect } from "@/forms/questions/index.ts";
 import { DepartmentId, DEPS, DEPS_IDS } from "@/departments.ts";
@@ -16,6 +17,7 @@ export interface CandidateApplicationData {
   began: boolean;
   editing: boolean;
   telegramUsername: string | null;
+  telegramId: number | null;
   fullName: string | null;
   skills: string | null;
   departmentsChoice: {
@@ -34,6 +36,7 @@ export const getInitialCandidateApplicationData = (): CandidateApplicationData =
   began: false,
   editing: false,
   telegramUsername: null,
+  telegramId: null,
   fullName: null,
   skills: null,
   departmentsChoice: {
@@ -78,6 +81,14 @@ composer.command(["pause", "cancel", "stop"], async (ctx, next) => {
   }
 });
 
+composer.on("::bot_command", async (ctx, next) => {
+  if (CONVERSATION_ID in await ctx.conversation.active()) {
+    await ctx.reply(ctx.t(msg("any-command")));
+  } else {
+    await next();
+  }
+});
+
 // register conversation with error boundary
 composer.errorBoundary(
   async (err) => {
@@ -102,8 +113,21 @@ Error: ${err.error}
 
 // register "trigger" command after registering the conversation,
 // so it will trigger only if not in the conversation yet
-composer.command("apply", async (ctx) => {
-  if (ctx.session.application.began) {
+composer.command("apply", async (ctx, next) => {
+  // TODO: handle errors of Notion API, since it was written by me...
+  const member = await ctx.o12t.member();
+
+  if (member) {
+    if (member.isActive) {
+      await ctx.reply(ctx.t(msg("already-member")));
+    } else {
+      await next();
+    }
+    return;
+  } else if (await ctx.o12t.candidate()) {
+    await ctx.reply(ctx.t(msg("already-applied")));
+    return;
+  } else if (ctx.session.application.began) {
     await ctx.reply(ctx.t(msg("continue")));
   } else {
     await ctx.reply(ctx.t(msg("begin")));
@@ -117,6 +141,7 @@ composer.command("apply", async (ctx) => {
  */
 async function candidateApplication(cnv: Cnv, ctx: Ctx) {
   await cnv.run(i18nMiddleware);
+  await cnv.run(o12tMiddleware);
   await cnv.run(departmentsMenuComposer);
   await cnv.run(confirmationMenu);
 
@@ -126,6 +151,11 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
     if (!cnv.session.application.telegramUsername) {
       const telegramUsername = ctx.from?.username ?? null;
       cnv.session.application.telegramUsername = telegramUsername;
+    }
+
+    if (!cnv.session.application.telegramId) {
+      const telegramId = ctx.from?.id ?? null;
+      cnv.session.application.telegramId = telegramId;
     }
 
     if (!cnv.session.application.fullName) {
@@ -212,7 +242,21 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
     }
   }
 
-  ctx.reply(ctx.t(msg("submitted")));
+  let atLeastOneSucceeded = false;
+  for (const consumer of applicationConsumers) {
+    try {
+      await cnv.external(async () => await consumer(cnv.session.application, ctx));
+      atLeastOneSucceeded = true;
+    } catch (err) {
+      console.error(`ERROR while consuming application: ${err}`);
+    }
+  }
+
+  if (atLeastOneSucceeded) {
+    ctx.reply(ctx.t(msg("submitted")));
+  } else {
+    ctx.reply(ctx.t(msg("submission-error")));
+  }
 }
 
 async function askAboutDepartments(cnv: Cnv, ctx: Ctx): Promise<boolean> {
@@ -248,7 +292,7 @@ async function askAboutDepartments(cnv: Cnv, ctx: Ctx): Promise<boolean> {
             .resized(),
         },
       );
-      // wait until user sends some text to confirm that he ready
+      // wait until user sends some text to confirm that he is ready
       // to start answering departments' questions
       await cnv.form.text();
     } else {
@@ -275,7 +319,7 @@ async function askAboutDepartments(cnv: Cnv, ctx: Ctx): Promise<boolean> {
         await ctx.reply(
           ctx.t(
             msg("dep-question"),
-            { qNo: i + 1, dep: dep.displayName },
+            { qNo: i + 1, total: questions.length, dep: dep.displayName },
           ),
           { reply_markup: { remove_keyboard: true } },
         );
@@ -405,4 +449,65 @@ async function confirmApplication(cnv: Cnv, ctx: Ctx): Promise<"confirm" | "edit
   await cnv.waitUntil((ctx) => ctx.session.application.confirmation != null);
 
   return cnv.session.application.confirmation ?? "confirm";
+}
+
+type ApplicationConsumer = (
+  application: CandidateApplicationData,
+  ctx: Ctx,
+) => Promise<void>;
+
+const applicationConsumers: ApplicationConsumer[] = [
+  submitApplicationToNotionDb,
+];
+
+async function submitApplicationToNotionDb(
+  application: CandidateApplicationData,
+  ctx: Ctx,
+): Promise<void> {
+  const answersString = convertApplicationDepartmentsAnswersToString(
+    application.departmentQuestions,
+    ctx,
+  );
+
+  await ctx.o12t.addCandidate({
+    fullName: application.fullName ?? "—",
+    telegramId: application.telegramId ?? -1,
+    telegramUsername: application.telegramUsername ?? "—",
+    skills: application.skills ?? "—",
+    departments: {
+      tech: false,
+      design: false,
+      media: false,
+      management: false,
+      ...application.departmentsChoice.chosen,
+    },
+    answers: answersString,
+    motivation: application.motivation ?? "—",
+    whereKnew: application.whereKnew ?? "—",
+  });
+}
+
+function convertApplicationDepartmentsAnswersToString(
+  answers: CandidateApplicationData["departmentQuestions"],
+  ctx: Ctx,
+): string {
+  let result = "";
+
+  for (const depId of DEPS_IDS) {
+    const dep = DEPS[depId];
+    const questions = dep.questions;
+
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
+
+      const answer = answers[depId]?.[question.msgId];
+      if (answer) {
+        result += `${dep.displayName} Q${i + 1} - ${
+          ctx.t(question.msgId)
+        }\n${answer}\n\n`;
+      }
+    }
+  }
+
+  return result;
 }

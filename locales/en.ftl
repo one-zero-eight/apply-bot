@@ -15,12 +15,17 @@ profile-cmd = Here is your profile:
   <b>Role:</b> { $role }
   <b>Speaking languages:</b> { $langs }
 
+  Member since { $date }.
+
 unknown-cmd = Sorry, but I don't know this command.
 
 ## Conversations
 
 candidate-application-cnv =
+  .already-member = You're already among us! You can even see your /profile.
+  .already-applied = It seems like we already have your application.
   .error = ⚠️ Oops! Something bad just happened. Try to /apply again, or contact us.
+  .any-command = <i>/pause the conversation to use commands</i>
   .begin = I'm happy to know you want to join our team!
 
     But before you do, we need to know something about you. I'll ask you several questions and then send your application to responsible people in our team.
@@ -62,7 +67,7 @@ candidate-application-cnv =
   } gave me a list of questions to know more about you. Let me now ask these questions.
   .deps-chosen-short = You've chosen: <u>{ $chosen }</u>.
   .ok-btn = Okay
-  .dep-question = <b>Question #{ $qNo } from { $dep } department</b>
+  .dep-question = <b>{ $dep } — Question { $qNo }/{ $total }</b>
   .thanks-for-answering-deps-questions = Thank you for the detailed answers to the departments questions.
   .n-questions-remain = We're almost done. { $n ->
       [one] And the last question!
@@ -91,7 +96,10 @@ candidate-application-cnv =
     Check everything and confirm submission.
   .edit-apply-btn = Edit 📝
   .confirm-apply-btn = Submit ✅
-  .submitted = Your application has been submitted 🎉
+  .submitted = Your application has been successfully submitted 🎉
+
+    We'll contact you as soon as we can. Stay tuned!
+  .submission-error = 😔 Sorry, but something went wrong. Application submission failed. Try to /apply again later, or contact us.
 
 ### Candidate application departments questions
 q-tech-1 = What programming experience do you have?	
