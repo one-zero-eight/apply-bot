@@ -6,6 +6,7 @@ import { config } from "./config.ts";
 import { i18nMiddleware } from "./plugins/i18n.ts";
 import { o12tMiddleware } from "./plugins/o12t.ts";
 import { handlers } from "./handlers/index.ts";
+import { getInitialCandidateApplicationData } from "./handlers/conversations/candidate-application.ts";
 
 /**
  * Configures everything and starts the bot.
@@ -27,15 +28,7 @@ function runBot() {
     application: {
       // store candidate application per user
       getSessionKey: (ctx) => ctx.from?.id?.toString() ?? "",
-      initial: () => ({
-        fullName: null,
-        skills: null,
-        departmentsChoice: {
-          selected: {},
-          finished: false,
-        },
-        departmentQuestions: {},
-      }),
+      initial: getInitialCandidateApplicationData,
     },
     // storage for conversations plugin
     conversation: {},

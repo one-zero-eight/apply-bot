@@ -1,36 +1,59 @@
+import {
+  Question,
+  QuestionOpen,
+  QuestionSelect,
+  QuestionUrl,
+} from "@/forms/questions/index.ts";
+
 export const DEPS_IDS = ["tech", "design", "media", "management"] as const;
 
 export const DEPS: Departments = {
   tech: {
     id: "tech",
     displayName: "Tech",
-    questions: [ // TODO
-      { id: "tech-example", type: "select", optionIds: ["1", "2", "3"] },
-      { id: "tech-example2", type: "select", optionIds: ["x", "y", "z"] },
+    questions: [
+      new QuestionOpen({ msgId: "q-tech-1" }),
+      new QuestionOpen({ msgId: "q-tech-2" }),
+      new QuestionOpen({ msgId: "q-tech-3" }),
     ],
   },
 
   design: {
     id: "design",
     displayName: "Design",
-    questions: [ // TODO
-      { id: "design-example", type: "select", optionIds: ["1", "2", "3"] },
+    questions: [
+      new QuestionOpen({ msgId: "q-design-1" }),
+      new QuestionOpen({ msgId: "q-design-2" }),
+      new QuestionOpen({ msgId: "q-design-3" }),
     ],
   },
 
   media: {
     id: "media",
     displayName: "Media",
-    questions: [ // TODO
-      { id: "media-example", type: "select", optionIds: ["1", "2", "3"] },
+    questions: [
+      new QuestionOpen({ msgId: "q-media-1" }),
+      new QuestionSelect({
+        msgId: "q-media-2",
+        optionIdsKeyboard: [
+          ["1-5-hours-per-week"],
+          ["5-10-hours-per-week"],
+          ["10-more-hours-per-week"],
+        ],
+      }),
+      new QuestionUrl({ msgId: "q-media-3" }),
     ],
   },
 
   management: {
     id: "management",
     displayName: "Management",
-    questions: [ // TODO
-      { id: "management-example", type: "select", optionIds: ["1", "2", "3"] },
+    questions: [
+      new QuestionOpen({ msgId: "q-management-1" }),
+      new QuestionOpen({ msgId: "q-management-2" }),
+      new QuestionOpen({ msgId: "q-management-3" }),
+      new QuestionOpen({ msgId: "q-management-4" }),
+      new QuestionOpen({ msgId: "q-management-5" }),
     ],
   },
 };
@@ -41,19 +64,6 @@ export type Departments<D extends DepartmentId = DepartmentId> = {
   [K in D]: {
     id: K;
     displayName: string;
-    questions: [DepartmentQuestion, ...DepartmentQuestion[]];
+    questions: [Question, ...Question[]];
   };
 };
-
-/* Questions */
-
-export interface DepartmentQuestionBase {
-  id: string;
-}
-
-export interface DepartmentQuestionSelect extends DepartmentQuestionBase {
-  type: "select";
-  optionIds: [string, string, ...string[]];
-}
-
-export type DepartmentQuestion = DepartmentQuestionSelect; // only one for now

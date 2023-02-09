@@ -14,8 +14,7 @@ const pm = handlers.filter((ctx) => ctx.chat?.type === "private");
 
 pm.use(candidateApplicationConversation);
 
-const membersPm = pm.filter(async (ctx: Ctx) => (await ctx.o12t.member()) != null);
-membersPm.command("profile", profileCmd);
+pm.command("profile", profileCmd);
 
 pm.command("start", startCmd);
 pm.command("help", helpCmd);

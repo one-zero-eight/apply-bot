@@ -107,7 +107,7 @@ export class O12t<C extends Context> {
   middleware(): MiddlewareFn<C & O12tFlavor> {
     const getMember = this.getMemberByTelegramId.bind(this);
 
-    return (ctx, next) => {
+    return async (ctx, next) => {
       ctx.o12t = {
         getMemberByTelegramId: getMember,
         member: async () => {
@@ -117,7 +117,7 @@ export class O12t<C extends Context> {
           return null;
         },
       };
-      return next();
+      await next();
     };
   }
 }
@@ -141,6 +141,8 @@ class TasksQueue {
           if (waitTimeMs > 0) {
             await delay(waitTimeMs);
           }
+          console.log(`Running task. Queue length: ${this.queue.length}`);
+
           const result = await task();
           this.lastTaskFinishedAt = new Date();
           resolve(result);
