@@ -258,9 +258,10 @@ export class O12t<C extends Context> {
             this.cachedMembers = actualMembers;
             this.membersLastRefreshedAt = new Date();
             resolve(actualMembers);
-            this.membersFetchingPromise = null;
           } catch (error) {
             reject(error);
+          } finally {
+            this.membersFetchingPromise = null;
           }
         });
       });
@@ -336,9 +337,10 @@ export class O12t<C extends Context> {
             this.cachedCandidates = actualCandidates;
             this.candidatesLastRefreshedAt = new Date();
             resolve(actualCandidates);
-            this.candidatesFetchingPromise = null;
           } catch (error) {
             reject(error);
+          } finally {
+            this.candidatesFetchingPromise = null;
           }
         });
       });
