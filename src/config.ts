@@ -5,6 +5,7 @@ export interface BotConfig {
   NOTION_INTEGRATION_TOKEN: string;
   NOTION_MEMBERS_DB_ID: string;
   NOTION_CANDIDATES_DB_ID: string;
+  WEBHOOK_SECRET_PATH?: string;
 }
 
 function loadConfig(): BotConfig {
@@ -24,6 +25,8 @@ function loadConfig(): BotConfig {
       throw new Error(`${key} environment variable is not set`);
     }
   }
+
+  cfg["WEBHOOK_SECRET_PATH"] = raw["WEBHOOK_SECRET_PATH"];
 
   return cfg;
 }
