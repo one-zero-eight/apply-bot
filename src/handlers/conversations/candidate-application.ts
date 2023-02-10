@@ -81,7 +81,7 @@ composer.command(["pause", "cancel", "stop"], async (ctx, next) => {
   }
 });
 
-composer.on("msg", async (ctx, next) => {
+composer.on("::bot_command", async (ctx, next) => {
   const inConversation = CONVERSATION_ID in await ctx.conversation.active();
   if (!inConversation) {
     await next();
