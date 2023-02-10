@@ -1,6 +1,7 @@
 import { Keyboard } from "grammy";
 import type { Cnv, Ctx } from "@/types.ts";
-import { QuestionBase, type QuestionBaseOptions } from "./base.ts";
+import { QuestionAskOptions, QuestionBase, type QuestionBaseOptions } from "./base.ts";
+import { escapeHtml } from "@/utils/html.ts";
 
 export type OptionId = string;
 
@@ -18,46 +19,51 @@ export class QuestionSelect extends QuestionBase<OptionId, QuestionBaseOptions> 
     this.optionIds = this.optionIdsKeyboard.reduce((acc, row) => [...acc, ...row], []);
   }
 
-  public ask(cnv: Cnv, ctx: Ctx): Promise<OptionId> {
-    return this._ask(cnv, ctx, false);
-  }
-
-  public askOrSkip(cnv: Cnv, ctx: Ctx): Promise<OptionId | null> {
-    return this._ask(cnv, ctx, true);
-  }
-
-  public askOrKeepOld(
+  public async ask(
     cnv: Cnv,
     ctx: Ctx,
-    _old = "",
-    _oldAsText?: string,
-  ): Promise<string> {
-    // For select user just chooses another option
-    return this._ask(cnv, ctx, false);
-  }
+    { header, footer, old }: QuestionAskOptions<OptionId> = {},
+  ): Promise<OptionId> {
+    let sendMsg;
+    if (old !== undefined) {
+      const oldText = this.getOptionText(old, ctx);
+      sendMsg = async (ctx: Ctx) => {
+        const footerCombined = (footer ? footer + "\n\n" : "") + ctx.t(
+          "question-keep-old",
+          { old: escapeHtml(oldText) },
+        );
+        await this.sendSelectOptionsMessage(ctx, { header, footer: footerCombined });
+      };
+    } else {
+      sendMsg = async (ctx: Ctx) => {
+        await this.sendSelectOptionsMessage(ctx, { header, footer });
+      };
+    }
 
-  private async _ask<S extends boolean>(
-    cnv: Cnv,
-    ctx: Ctx,
-    canSkip: S,
-  ): Promise<S extends true ? OptionId | null : OptionId> {
     let selectedOptionId = null;
     do {
-      await this.sendSelectOptionsMessage(ctx);
-      const text = await cnv.form.text(this.sendSelectOptionsMessage.bind(this));
+      await sendMsg(ctx);
+      const answer = await cnv.form.text(this.sendSelectOptionsMessage.bind(this));
 
-      if (canSkip && text.trim() === "/skip") {
-        return null as (S extends true ? OptionId | null : OptionId);
+      if (old !== undefined && answer.trim() === "/keep") {
+        return old;
       } else {
-        selectedOptionId = this.getOptionIdByAnswer(text, ctx);
+        selectedOptionId = this.getOptionIdByAnswer(answer, ctx);
       }
-    } while (selectedOptionId == null);
+    } while (selectedOptionId === null);
     return selectedOptionId;
   }
 
-  private async sendSelectOptionsMessage(ctx: Ctx): Promise<void> {
+  private async sendSelectOptionsMessage(
+    ctx: Ctx,
+    { header, footer }: { header?: string; footer?: string } = {},
+  ): Promise<void> {
     const list = this.generateOptionsListTo(ctx);
-    const message = `${ctx.t(this.msgId)}\n\n${list}`;
+    const message = this.buildMessage({
+      header,
+      message: `${ctx.t(this.msgId)}\n\n${list}`,
+      footer,
+    });
     const keyobard = this.generateOptionsKeyboard(ctx);
 
     await ctx.reply(message, { reply_markup: keyobard });
