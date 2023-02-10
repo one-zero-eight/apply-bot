@@ -7,7 +7,7 @@ import type { Cnv, Ctx } from "@/types.ts";
 import { QuestionOpen, QuestionSelect } from "@/forms/questions/index.ts";
 import { DepartmentId, DEPS, DEPS_IDS } from "@/departments.ts";
 import { escapeHtml } from "@/utils/html.ts";
-import { parseFullName } from "@/utils/parsing.ts";
+import { parseBotCommand, parseFullName } from "@/utils/parsing.ts";
 
 export const CONVERSATION_ID = "candidate-application";
 
@@ -82,11 +82,19 @@ composer.command(["pause", "cancel", "stop"], async (ctx, next) => {
 });
 
 composer.on("::bot_command", async (ctx, next) => {
-  if (CONVERSATION_ID in await ctx.conversation.active()) {
-    await ctx.reply(ctx.t(msg("any-command")));
-  } else {
+  const inConversation = CONVERSATION_ID in await ctx.conversation.active();
+  if (!inConversation) {
     await next();
+    return;
   }
+
+  const [command] = parseBotCommand(ctx.msg.text ?? "") ?? [null];
+  if (!command || isCommandValidForConversation(command)) {
+    await next();
+    return;
+  }
+
+  await ctx.reply(ctx.t(msg("any-command")));
 });
 
 // register conversation with error boundary
@@ -510,4 +518,18 @@ function convertApplicationDepartmentsAnswersToString(
   }
 
   return result;
+}
+
+function isCommandValidForConversation(command: string): boolean {
+  // allow numbers for `QuestionSelect`s
+  if (command.match(/^\d+$/)) {
+    return true;
+  }
+
+  // allow /keep for saving previous answers
+  if (command === "keep") {
+    return true;
+  }
+
+  return false;
 }
