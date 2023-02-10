@@ -1,0 +1,40 @@
+name: Deno Q&A
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        id: deno_setup
+        with:
+          deno-version: v1.x
+
+      - name: Format
+        if: success() || (failure() && steps.deno_setup.conclusion == 'success')
+        run: deno fmt --check
+
+      - name: Lint
+        if: success() || (failure() && steps.deno_setup.conclusion == 'success')
+        run: deno lint
+      
+      - name: Type check
+        if: success() || (failure() && steps.deno_setup.conclusion == 'success')
+        run: deno check ./src/main.ts
+
+      - name: Test
+        if: success() || (failure() && steps.deno_setup.conclusion == 'success')
+        run: deno test -A

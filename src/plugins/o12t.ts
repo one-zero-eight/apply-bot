@@ -207,6 +207,7 @@ export class O12t<C extends Context> {
         "Submitted": {
           date: { start: notionNow },
         },
+        // deno-lint-ignore no-explicit-any
       } as any,
     });
 
