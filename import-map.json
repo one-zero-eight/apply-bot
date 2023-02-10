@@ -1,8 +1,4 @@
 {
-  "lock": "deno.lock",
-  "tasks": {
-    "lint": "deno lint && deno fmt --check && deno check ./src/run-lp.ts && deno check ./src/run-wh.ts"
-  },
   "imports": {
     "@/": "./src/",
     "async": "https://deno.land/std@0.176.0/async/mod.ts",
@@ -17,28 +13,5 @@
     "grammy-transformer-throttler": "https://deno.land/x/grammy_transformer_throttler@v1.2.1/mod.ts",
     "grammy-ratelimiter": "https://deno.land/x/grammy_ratelimiter@v1.1.6/mod.ts",
     "notion": "https://esm.sh/@notionhq/client@2.2.3"
-  },
-  "fmt": {
-    "files": {
-      "include": [
-        "src/",
-        "test/",
-        "deno.json"
-      ]
-    },
-    "options": {
-      "useTabs": false,
-      "indentWidth": 2,
-      "lineWidth": 88,
-      "semiColons": true,
-      "singleQuote": false
-    }
-  },
-  "compilerOptions": {
-    "lib": [
-      "dom",
-      "deno.ns",
-      "deno.unstable"
-    ]
   }
 }

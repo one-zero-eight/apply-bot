@@ -1,4 +1,4 @@
-import { loadSync } from "dotenv";
+import { load } from "dotenv";
 
 export interface BotConfig {
   TELEGRAM_BOT_TOKEN: string;
@@ -8,27 +8,34 @@ export interface BotConfig {
   WEBHOOK_SECRET_PATH?: string;
 }
 
-function loadConfig(): BotConfig {
-  const raw = loadSync();
+async function loadConfig(): Promise<BotConfig> {
+  await load({ export: true });
   const cfg = {} as BotConfig;
 
-  const keys = [
+  const required = [
     "TELEGRAM_BOT_TOKEN",
     "NOTION_INTEGRATION_TOKEN",
     "NOTION_MEMBERS_DB_ID",
     "NOTION_CANDIDATES_DB_ID",
   ] as const;
 
-  for (const key of keys) {
-    cfg[key] = raw[key];
-    if (!cfg[key]) {
+  const optional = [
+    "WEBHOOK_SECRET_PATH",
+  ] as const;
+
+  for (const key of required) {
+    const val = Deno.env.get(key);
+    if (!val) {
       throw new Error(`${key} environment variable is not set`);
     }
+    cfg[key] = val;
   }
 
-  cfg["WEBHOOK_SECRET_PATH"] = raw["WEBHOOK_SECRET_PATH"];
+  for (const key of optional) {
+    cfg[key] = Deno.env.get(key);
+  }
 
   return cfg;
 }
 
-export const config = loadConfig();
+export const config = await loadConfig();

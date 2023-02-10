@@ -1,0 +1,44 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["main", "preview"]
+
+jobs:
+  deno-deploy-preivew:
+    name: Deno Deploy (Preview)
+    if: github.ref == 'refs/heads/preview'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # needed for auth with Deno Deploy
+      contents: read # needed to clone the repository
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Upload to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: bot-108-preview
+          entrypoint: ./src/run-wh.ts
+          import-map: ./import-map.json
+
+  deno-deploy-production:
+    name: Deno Deploy (Production)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # needed for auth with Deno Deploy
+      contents: read # needed to clone the repository
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Upload to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: bot-108
+          entrypoint: ./src/run-wh.ts
+          import-map: ./import-map.json
