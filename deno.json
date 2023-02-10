@@ -8,11 +8,14 @@
     "async": "https://deno.land/std@0.176.0/async/mod.ts",
     "dotenv": "https://deno.land/std@0.176.0/dotenv/mod.ts",
     "testing": "https://deno.land/std@0.176.0/testing/asserts.ts",
+    "server": "https://deno.land/std@0.176.0/http/server.ts",
     "grammy": "https://deno.land/x/grammy@v1.14.1/mod.ts",
     "grammy-i18n": "https://deno.land/x/grammy_i18n@v1.0.1/mod.ts",
     "grammy-parse-mode": "https://deno.land/x/grammy_parse_mode@1.5.0/mod.ts",
     "grammy-conversations": "https://deno.land/x/grammy_conversations@v1.1.1/mod.ts",
     "grammy-menu": "https://deno.land/x/grammy_menu@v1.1.2/mod.ts",
+    "grammy-transformer-throttler": "https://deno.land/x/grammy_transformer_throttler@v1.2.1/mod.ts",
+    "grammy-ratelimiter": "https://deno.land/x/grammy_ratelimiter@v1.1.6/mod.ts",
     "notion": "npm:@notionhq/client@2.2.3"
   },
   "fmt": {

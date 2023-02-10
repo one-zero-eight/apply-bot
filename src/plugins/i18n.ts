@@ -5,7 +5,7 @@ import type { Ctx } from "@/types.ts";
 const __dirname = new URL(".", import.meta.url).pathname;
 export const i18n = new I18n<Ctx>({
   defaultLocale: "en",
-  directory: `${__dirname}/../../locales`,
   useSession: false,
 });
+await i18n.loadLocalesDir(`${__dirname}/../../locales`);
 export const i18nMiddleware = i18n.middleware();
