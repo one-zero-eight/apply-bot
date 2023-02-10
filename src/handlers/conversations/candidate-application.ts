@@ -170,10 +170,10 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
       const fullName = await questions.fullName.ask(cnv, ctx);
       cnv.session.application.fullName = fullName;
     } else if (cnv.session.application.editing) {
-      const fullName = await questions.fullName.askOrKeepOld(
+      const fullName = await questions.fullName.ask(
         cnv,
         ctx,
-        cnv.session.application.fullName,
+        { old: cnv.session.application.fullName },
       );
       cnv.session.application.fullName = fullName;
     }
@@ -182,10 +182,10 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
       const skills = await questions.skills.ask(cnv, ctx);
       cnv.session.application.skills = skills;
     } else if (cnv.session.application.editing) {
-      const skills = await questions.skills.askOrKeepOld(
+      const skills = await questions.skills.ask(
         cnv,
         ctx,
-        cnv.session.application.skills,
+        { old: cnv.session.application.skills },
       );
       cnv.session.application.skills = skills;
     }
@@ -221,10 +221,10 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
       const motivation = await questions.motivation.ask(cnv, ctx);
       cnv.session.application.motivation = motivation;
     } else if (cnv.session.application.editing) {
-      const motivation = await questions.motivation.askOrKeepOld(
+      const motivation = await questions.motivation.ask(
         cnv,
         ctx,
-        cnv.session.application.motivation,
+        { old: cnv.session.application.motivation },
       );
       cnv.session.application.motivation = motivation;
     }
@@ -233,10 +233,10 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
       const whereKnew = await questions.whereKnew.ask(cnv, ctx);
       cnv.session.application.whereKnew = whereKnew;
     } else if (cnv.session.application.editing) {
-      const whereKnew = await questions.whereKnew.askOrKeepOld(
+      const whereKnew = await questions.whereKnew.ask(
         cnv,
         ctx,
-        cnv.session.application.whereKnew,
+        { old: cnv.session.application.whereKnew },
       );
       cnv.session.application.whereKnew = whereKnew;
     }
@@ -324,27 +324,23 @@ async function askAboutDepartments(cnv: Cnv, ctx: Ctx): Promise<boolean> {
           continue;
         }
 
-        await ctx.reply(
-          ctx.t(
-            msg("dep-question"),
-            { qNo: i + 1, total: questions.length, dep: dep.displayName },
-          ),
-          { reply_markup: { remove_keyboard: true } },
+        const messageHeader = ctx.t(
+          msg("dep-question"),
+          {
+            qNo: i + 1,
+            total: questions.length,
+            dep: dep.displayName,
+          },
         );
 
         // deno-fmt-ignore
         const old = cnv.session.application.departmentQuestions[depId]?.[question.msgId];
-
-        const answer = old !== undefined
-          ? (await question.askOrKeepOld(cnv, ctx, old))
-          : (await question.ask(cnv, ctx));
+        const answer = await question.ask(cnv, ctx, { header: messageHeader, old });
 
         const currentAnswers = cnv.session.application.departmentQuestions[depId];
         cnv.session.application.departmentQuestions[depId] = {
           ...currentAnswers,
-          [question.msgId]: question instanceof QuestionSelect
-            ? question.getOptionText(answer, ctx)
-            : answer,
+          [question.msgId]: answer,
         };
 
         askedSomething = true;
@@ -508,8 +504,12 @@ function convertApplicationDepartmentsAnswersToString(
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
 
-      const answer = answers[depId]?.[question.msgId];
+      let answer = answers[depId]?.[question.msgId];
       if (answer) {
+        if (question instanceof QuestionSelect) {
+          answer = question.getOptionText(answer, ctx);
+        }
+
         result += `${dep.displayName} Q${i + 1} - ${
           ctx.t(question.msgId)
         }\n${answer}\n\n`;

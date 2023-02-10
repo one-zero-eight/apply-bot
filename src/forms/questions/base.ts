@@ -4,6 +4,12 @@ export interface QuestionBaseOptions {
   msgId: string;
 }
 
+export interface QuestionAskOptions<T> {
+  old?: T;
+  header?: string;
+  footer?: string;
+}
+
 export abstract class QuestionBase<
   T,
   O extends QuestionBaseOptions = QuestionBaseOptions,
@@ -17,21 +23,18 @@ export abstract class QuestionBase<
   public abstract ask(
     cnv: Cnv,
     ctx: Ctx,
-  ): Promise<T>;
-
-  public abstract askOrSkip(
-    cnv: Cnv,
-    ctx: Ctx,
-  ): Promise<T | null>;
-
-  public abstract askOrKeepOld(
-    cnv: Cnv,
-    ctx: Ctx,
-    old: T,
-    oldAsText?: string,
+    options?: QuestionAskOptions<T>,
   ): Promise<T>;
 
   public get msgId(): string {
     return this._msgId;
+  }
+
+  protected buildMessage({
+    message: msg,
+    footer: f,
+    header: h,
+  }: { message: string; footer?: string; header?: string }): string {
+    return `${h ? h + "\n\n" : ""}${msg}${f ? "\n\n" + f : ""}`;
   }
 }
