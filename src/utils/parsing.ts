@@ -29,3 +29,11 @@ export const parseUrl: StringParser = (maybeUrl) => {
   }
   return null;
 };
+
+export const parseBotCommand: StringParser<[string, string]> = (maybeCommand) => {
+  const m = maybeCommand.match(/^\/([a-z\d_]{1,32})\s/i);
+  if (m) {
+    return [m[1], maybeCommand.slice(m[0].length)];
+  }
+  return null;
+};
