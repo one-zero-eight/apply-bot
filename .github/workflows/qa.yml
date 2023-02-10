@@ -33,7 +33,7 @@ jobs:
       
       - name: Type check
         if: success() || (failure() && steps.deno_setup.conclusion == 'success')
-        run: deno check ./src/main.ts
+        run: deno check ./src/run-wh.ts && deno check ./src/run-lp.ts
 
       - name: Test
         if: success() || (failure() && steps.deno_setup.conclusion == 'success')
