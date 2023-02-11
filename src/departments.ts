@@ -30,7 +30,6 @@ export const DEPS: Departments = {
           ["art", "vector"],
           ["smm"],
         ],
-        minAnswers: 1,
       }),
       new QuestionOpen({ msgId: "q-design-2" }),
       new QuestionOpen({ msgId: "q-design-3" }),
