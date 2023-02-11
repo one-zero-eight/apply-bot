@@ -41,6 +41,11 @@ bot.use(session({
     getSessionKey: (ctx) => ctx.from?.id?.toString() ?? "",
     initial: getInitialCandidateApplicationData,
   },
+  questionsMenus: {
+    // store questions menu states per user
+    getSessionKey: (ctx) => ctx.from?.id?.toString() ?? "",
+    initial: () => ({}),
+  },
   // storage for conversations plugin
   conversation: {},
 }));

@@ -7,6 +7,13 @@ import type { CandidateApplicationData } from "@/handlers/conversations/candidat
 
 export interface SessionData {
   application: CandidateApplicationData;
+  questionsMenus: Record<
+    string,
+    Record<string, boolean> & {
+      $finished?: boolean;
+      $oldSet?: boolean;
+    }
+  >;
 }
 
 export type Ctx =

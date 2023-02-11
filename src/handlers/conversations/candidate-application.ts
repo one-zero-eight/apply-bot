@@ -4,7 +4,13 @@ import { Menu } from "grammy-menu";
 import { i18nMiddleware } from "@/plugins/i18n.ts";
 import { o12tMiddleware } from "@/plugins/o12t.ts";
 import type { Cnv, Ctx } from "@/types.ts";
-import { QuestionOpen, QuestionSelect } from "@/forms/questions/index.ts";
+import {
+  MultiSelectAnswer,
+  QuestionMultiSelect,
+  QuestionOpen,
+  QuestionSelect,
+} from "@/forms/questions/index.ts";
+import { selectBtn } from "@/forms/questions/multi-select.ts";
 import { DepartmentId, DEPS, DEPS_IDS } from "@/departments.ts";
 import { escapeHtml } from "@/utils/html.ts";
 import { parseBotCommand, parseFullName } from "@/utils/parsing.ts";
@@ -25,7 +31,9 @@ export interface CandidateApplicationData {
     finished: boolean;
   };
   departmentQuestions: {
-    [D in DepartmentId]?: { [Q: string]: string };
+    [D in DepartmentId]?: {
+      [Q: string]: string | MultiSelectAnswer;
+    };
   };
   motivation: string | null;
   whereKnew: string | null;
@@ -57,14 +65,32 @@ const questions = {
 };
 
 const departmentsMenu = generateDepartmentsChoiceMenu();
-const departmentsMenuComposer = new Composer<Ctx>();
-departmentsMenuComposer.errorBoundary(
-  (err) => {
-    console.error(`Error in departments-menu: `, err.error);
-  },
-  departmentsMenu,
-);
 const confirmationMenu = generateConfirmationMenu();
+const departmentsQuestionsMenus = Object.values(DEPS).reduce(
+  (acc, dep) => [
+    ...acc,
+    ...dep.questions.reduce((acc, q) => [
+      ...acc,
+      ...(q instanceof QuestionMultiSelect ? [q.menu] : []),
+    ], [] as Menu<Ctx>[]),
+  ],
+  [] as Menu<Ctx>[],
+);
+const allMenus = [
+  departmentsMenu,
+  confirmationMenu,
+  ...departmentsQuestionsMenus,
+];
+
+const menusComposer = new Composer<Ctx>();
+allMenus.forEach((menu) => {
+  menusComposer.errorBoundary(
+    (err) => {
+      console.error(`Error in menu: `, err.error);
+    },
+    menu,
+  );
+});
 
 export const composer = new Composer<Ctx>();
 
@@ -150,8 +176,7 @@ composer.command("apply", async (ctx, next) => {
 async function candidateApplication(cnv: Cnv, ctx: Ctx) {
   await cnv.run(i18nMiddleware);
   await cnv.run(o12tMiddleware);
-  await cnv.run(departmentsMenuComposer);
-  await cnv.run(confirmationMenu);
+  await cnv.run(menusComposer);
 
   cnv.session.application.began = true;
 
@@ -260,11 +285,9 @@ async function candidateApplication(cnv: Cnv, ctx: Ctx) {
     }
   }
 
-  if (atLeastOneSucceeded) {
-    ctx.reply(ctx.t(msg("submitted")));
-  } else {
-    ctx.reply(ctx.t(msg("submission-error")));
-  }
+  const message = atLeastOneSucceeded ? msg("submitted") : msg("submission-error");
+
+  await ctx.reply(ctx.t(message), { reply_markup: { remove_keyboard: true } });
 }
 
 async function askAboutDepartments(cnv: Cnv, ctx: Ctx): Promise<boolean> {
@@ -333,11 +356,17 @@ async function askAboutDepartments(cnv: Cnv, ctx: Ctx): Promise<boolean> {
           },
         );
 
-        // deno-fmt-ignore
-        const old = cnv.session.application.departmentQuestions[depId]?.[question.msgId];
-        const answer = await question.ask(cnv, ctx, { header: messageHeader, old });
-
         const currentAnswers = cnv.session.application.departmentQuestions[depId];
+
+        let old, answer;
+        if (question instanceof QuestionMultiSelect) {
+          old = currentAnswers?.[question.msgId] as MultiSelectAnswer;
+          answer = await question.ask(cnv, ctx, { header: messageHeader, old });
+        } else {
+          old = currentAnswers?.[question.msgId] as string;
+          answer = await question.ask(cnv, ctx, { header: messageHeader, old });
+        }
+
         cnv.session.application.departmentQuestions[depId] = {
           ...currentAnswers,
           [question.msgId]: answer,
@@ -365,8 +394,10 @@ function generateDepartmentsChoiceMenu(): Menu<Ctx> {
 
     menu.text(
       (ctx) => (
-        (ctx.session.application.departmentsChoice.chosen[depId] ? "✔" : "✘") +
-        " " + dep.displayName
+        selectBtn(
+          dep.displayName,
+          ctx.session.application.departmentsChoice.chosen[depId] ?? false,
+        )
       ),
       (ctx) => {
         if (!ctx.session.application.departmentsChoice.finished) {
@@ -507,7 +538,9 @@ function convertApplicationDepartmentsAnswersToString(
       let answer = answers[depId]?.[question.msgId];
       if (answer) {
         if (question instanceof QuestionSelect) {
-          answer = question.getOptionText(answer, ctx);
+          answer = question.getOptionText(answer as string, ctx);
+        } else if (question instanceof QuestionMultiSelect) {
+          answer = question.stringifyAnswer(answer as MultiSelectAnswer, ctx);
         }
 
         result += `${dep.displayName} Q${i + 1} - ${

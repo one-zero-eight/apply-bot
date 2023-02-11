@@ -1,5 +1,6 @@
 import {
   Question,
+  QuestionMultiSelect,
   QuestionOpen,
   QuestionSelect,
   QuestionUrl,
@@ -22,7 +23,14 @@ export const DEPS: Departments = {
     id: "design",
     displayName: "Design",
     questions: [
-      new QuestionOpen({ msgId: "q-design-1" }),
+      new QuestionMultiSelect({
+        msgId: "q-design-1",
+        optionIdsKeyboard: [
+          ["ui-ux", "web"],
+          ["art", "vector"],
+          ["smm"],
+        ],
+      }),
       new QuestionOpen({ msgId: "q-design-2" }),
       new QuestionOpen({ msgId: "q-design-3" }),
     ],
@@ -36,9 +44,9 @@ export const DEPS: Departments = {
       new QuestionSelect({
         msgId: "q-media-2",
         optionIdsKeyboard: [
-          ["1-5-hours-per-week"],
-          ["5-10-hours-per-week"],
-          ["10-more-hours-per-week"],
+          ["hours-per-week-1-5"],
+          ["hours-per-week-5-10"],
+          ["hours-per-week-10-plus"],
         ],
       }),
       new QuestionUrl({ msgId: "q-media-3" }),
