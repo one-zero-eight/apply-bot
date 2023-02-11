@@ -10,6 +10,7 @@ import {
   QuestionOpen,
   QuestionSelect,
 } from "@/forms/questions/index.ts";
+import { selectBtn } from "@/forms/questions/multi-select.ts";
 import { DepartmentId, DEPS, DEPS_IDS } from "@/departments.ts";
 import { escapeHtml } from "@/utils/html.ts";
 import { parseBotCommand, parseFullName } from "@/utils/parsing.ts";
@@ -393,8 +394,10 @@ function generateDepartmentsChoiceMenu(): Menu<Ctx> {
 
     menu.text(
       (ctx) => (
-        (ctx.session.application.departmentsChoice.chosen[depId] ? "✔" : "✘") +
-        " " + dep.displayName
+        selectBtn(
+          dep.displayName,
+          ctx.session.application.departmentsChoice.chosen[depId] ?? false,
+        )
       ),
       (ctx) => {
         if (!ctx.session.application.departmentsChoice.finished) {

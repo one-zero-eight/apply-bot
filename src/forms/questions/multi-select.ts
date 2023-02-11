@@ -2,6 +2,13 @@ import { Menu } from "grammy-menu";
 import type { Cnv, Ctx } from "@/types.ts";
 import { QuestionAskOptions, QuestionBase, type QuestionBaseOptions } from "./base.ts";
 
+export const OPTION_NOT_SELECTED_SYMBOL = "○";
+export const OPTION_SELECTED_SYMBOL = "●";
+
+export const selectBtn = (text: string, selected: boolean) => (
+  `${selected ? "●" : "○"} ${text}`
+);
+
 export type OptionId = string;
 export type MultiSelectAnswer = Record<OptionId, boolean>;
 
@@ -81,8 +88,10 @@ export class QuestionMultiSelect extends QuestionBase<
       for (const optionId of row) {
         menu.text(
           (ctx) => (
-            (ctx.session.questionsMenus[this.menuId]?.[optionId] ? "✔" : "✘") +
-            " " + this.getOptionText(optionId, ctx)
+            selectBtn(
+              this.getOptionText(optionId, ctx),
+              ctx.session.questionsMenus[this.menuId]?.[optionId],
+            )
           ),
           (ctx) => {
             const menu = ctx.session.questionsMenus[this.menuId];
