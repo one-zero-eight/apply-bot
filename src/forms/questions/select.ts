@@ -61,7 +61,7 @@ export class QuestionSelect extends QuestionBase<OptionId, QuestionBaseOptions> 
     const list = this.generateOptionsListTo(ctx);
     const message = this.buildMessage({
       header,
-      message: `${ctx.t(this.msgId)}\n\n${list}`,
+      message: `${ctx.t(this.msgId)}\n\n${ctx.t("question-select-one")}\n${list}`,
       footer,
     });
     const keyobard = this.generateOptionsKeyboard(ctx);
@@ -108,6 +108,6 @@ export class QuestionSelect extends QuestionBase<OptionId, QuestionBaseOptions> 
   }
 
   public getOptionText(id: OptionId, ctx: Ctx) {
-    return ctx.t(`${this.msgId}__${id}`);
+    return ctx.t(`${this.msgId}.${id}`);
   }
 }

@@ -28,14 +28,13 @@ candidate-application-cnv =
   .any-command = <i>/pause the conversation to use commands</i>
   .begin = I'm happy to know you want to join our team!
 
-    But before you do, we need to know something about you. I'll ask you several questions and then send your application to responsible people in our team.
+    But before you do, we need to know something about you. I will ask you several questions and then will send your application to responsible people in our team.
 
-    <b>Note that:</b>
-    - during the conversation you can send me /stop, /cancel or /pause to pause the process and continue later;
-
-    - at the end you'll be able to modify your answers, so just proceed further, if you've made a mistake;
-
-    - formatting of your messages won't be preserved (i.e. "<del>my text</del>" will be recorded as "my text").
+    <b>Please, note that:</b>
+    » you can /pause the conversation at any time;
+    » you cannot use commands while I'm asking you;
+    » if you've made a mistake just continue further, you'll be able to modify your answers;
+    » formatting of your answers will NOT be preserved, so "<del>my text</del>" for me is "my text"
 
     Let's begin!
   .continue = Let's continue filling out the application.
@@ -98,7 +97,7 @@ candidate-application-cnv =
   .confirm-apply-btn = Submit ✅
   .submitted = Your application has been successfully submitted 🎉
 
-    We'll contact you as soon as we can. Stay tuned!
+    We will contact you as soon as we can. Stay tuned!
   .submission-error = 😔 Sorry, but something went wrong. Application submission failed. Try to /apply again later, or contact us.
 
 ### Candidate application departments questions
@@ -107,6 +106,11 @@ q-tech-2 = What about cust-dev or system analytics?
 q-tech-3 = Describe your own software/hardware solution to a problem that you are proud of.
 
 q-design-1 = Which directions do you want to work more?	
+  .ui-ux = UI/UX
+  .web = Web design
+  .art = Art
+  .vector = Vector graphics
+  .smm = SMM design
 q-design-2 = Which programs do you use for designing?
 
   e.g. Illustrator, Figma, etc.
@@ -114,10 +118,9 @@ q-design-3 = Send links to your works (you can create one document or paste link
 
 q-media-1 = What position do you want to take in media?	
 q-media-2 = How much time you may spend on media?
-q-media-2__1-5-hours-per-week = 1-5 hours per week
-q-media-2__5-10-hours-per-week = 5-10 hours per week
-q-media-2__10-more-hours-per-week = 10+ hours per week
-
+  .hours-per-week-1-5 = 1-5 hours per week
+  .hours-per-week-5-10 = 5-10 hours per week
+  .hours-per-week-10-plus = 10+ hours per week
 q-media-3 = Paste a link to your media-portfolio.	
 
 q-management-1 = What management applications do you use?	
@@ -131,3 +134,13 @@ q-management-5 = What is successful management for you?
 
 question-keep-old = Or /keep the previous answer:
   <i>{ $old }</i>
+question-select-one = Select one option:
+
+multi-select =
+  .select-at-least-n-btn = { $n ->
+    [one] Select at least one
+    *[other] Select at least { $n }
+  }
+  .select-confirm-btn = Confirm
+  .selected-none = <i>nothing</i>
+  .selection = You selected: { $selection }.
