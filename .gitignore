@@ -7,3 +7,6 @@
 
 # system files
 .DS_Store
+
+# data
+/redis_data
