@@ -30,10 +30,9 @@ want-to-108-yes =
 
   There are four departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b>, <b>Media</b>, and <b>Management</b>. You can read more about us in <a href="https://t.me/one_zero_eight/10">our presentation</a>.
 
-  We welcome everyone, who has something valuable to contribute and who is ready to grow with us. Is it about you? Then we're waiting for you! Send me /apply command, when you're ready to answer some questions and join us.
+  We welcome everyone, who has something valuable to contribute and who is ready to grow with us. Is it about you? Then we're waiting for you! Click the button (or send me /apply), when you're ready to answer some questions and join us.
 
-want-to-108-no =
-  Ok, have a nice day! Send /start if you change your decision.
+want-to-108-no = Ok, have a nice day! Send /start if you change your decision.
 
 cmd_help-member-active =
   Here is a list of commands:
@@ -68,6 +67,8 @@ cmd_unknown = Sorry, but I don't know this command 🫤
 ok = Okay 👌
 yes = Yes
 no = No
+i-want-to-108 = 🙋 I want to one-zero-eight!
+wait-a-second = Just a second.
 
 fallback-callback-query-msg-1 = Button's stuck!
 fallback-callback-query-msg-2 = Ship's sailed.
@@ -118,7 +119,7 @@ cnv_candidate-application =
   .cannot-use-command = <i>/pause the conversation to use commands</i>
   .btn_begin-go = Let's go!
   .btn_begin-cancel = Not now.
-  .q-name = What is your full name?
+  .q-name = What is your full name? (in English)
   .q-skills = Tell us more about your skills.
   .q-motivation = Why do you want to join our team? What is your motivation?
   .q-time-to-spend = How much time you may spend on one-zero-eight (including meetings, discussions, etc.)?

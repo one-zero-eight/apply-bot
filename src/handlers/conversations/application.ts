@@ -1,8 +1,9 @@
-import { Composer } from "grammy";
+import { Composer, NextFunction } from "grammy";
 import { createConversation } from "grammy-conversations";
 import type { Cnv, Ctx } from "@/types.ts";
 import { o12t } from "@/plugins/o12t.ts";
 import { i18nMiddleware } from "@/plugins/i18n.ts";
+import { escapeHtml } from "@/utils/html.ts";
 import { parseBotCommand } from "@/utils/parsing.ts";
 import { Options } from "@/forms/questions/multi-select.ts";
 import { type DepartmentId, departmentsIds, departmentsInfo } from "@/departments.ts";
@@ -12,7 +13,6 @@ import {
   QuestionOpen,
   QuestionSelect,
 } from "@/forms/questions/index.ts";
-import { escapeHtml } from "../../utils/html.ts";
 
 const cnvId = "candidate-application";
 const msg = (id: string) => `cnv_${cnvId}.${id}`;
@@ -41,6 +41,7 @@ const flowQuestions = {
     ] as DepartmentId[][],
     getOptionLabel: (opt) => departmentsInfo[opt].displayName,
     min: 1,
+    selectAtLeastTextPosition: "message",
   }),
   readyForDepartmentQuestions: new QuestionSelect({
     msgId: msg("departments-selected"),
@@ -643,8 +644,25 @@ conversationComposer.command(["undo", "back"], async (ctx, next) => {
 });
 
 conversationComposer.command("apply", async (ctx, next) => {
-  const member = await ctx.o12t.member();
+  return await beginApplicationConversation(ctx, next);
+});
 
+conversationComposer.callbackQuery("apply", async (ctx, next) => {
+  await ctx.answerCallbackQuery(ctx.t("wait-a-second"));
+  try {
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined });
+  } catch (err) {
+    console.error("failed to close keyboard", err);
+  }
+  return await beginApplicationConversation(ctx, next);
+});
+
+async function beginApplicationConversation(ctx: Ctx, next: NextFunction) {
+  if (cnvId in await ctx.conversation.active()) {
+    return await next();
+  }
+
+  const member = await ctx.o12t.member();
   if (member) {
     if (member.isActive) {
       await ctx.reply(ctx.t(msg("already-member")));
@@ -653,13 +671,16 @@ conversationComposer.command("apply", async (ctx, next) => {
       await next();
     }
     return;
-  } else if (await ctx.o12t.candidate()) {
+  }
+
+  const candidate = await ctx.o12t.candidate();
+  if (candidate) {
     await ctx.reply(ctx.t(msg("already-applied")));
     return;
   }
 
   await ctx.conversation.enter(cnvId);
-});
+}
 
 async function conversationBuilder(cnv: Cnv, ctx: Ctx) {
   await cnv.run(i18nMiddleware);

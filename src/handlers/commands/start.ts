@@ -1,3 +1,4 @@
+import { InlineKeyboard } from "grammy";
 import { Menu } from "grammy-menu";
 import type { Ctx } from "@/types.ts";
 
@@ -6,7 +7,13 @@ export const startMenu = new Menu<Ctx>("start-menu")
     (ctx) => ctx.t("yes"),
     async (ctx) => {
       await ctx.menu.close({ immediate: true });
-      await ctx.reply(ctx.t("want-to-108-yes"));
+      await ctx.reply(
+        ctx.t("want-to-108-yes"),
+        {
+          reply_markup: new InlineKeyboard().text(ctx.t("i-want-to-108"), "apply"),
+          disable_web_page_preview: true,
+        },
+      );
     },
   )
   .text(
@@ -28,7 +35,10 @@ export async function startCmd(ctx: Ctx) {
   }
   const candidate = await ctx.o12t.candidate();
   if (candidate != null) {
-    await ctx.reply(ctx.t("cmd_start-candidate", { name: candidate.name }));
+    await ctx.reply(
+      ctx.t("cmd_start-candidate", { name: candidate.name }),
+      { disable_web_page_preview: true },
+    );
     return;
   }
   await ctx.reply(ctx.t("cmd_start-unknown"), { reply_markup: startMenu });

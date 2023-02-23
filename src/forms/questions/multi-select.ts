@@ -18,6 +18,7 @@ export interface QuestionMultiSelectConfig<
   getOptionLabel?: (option: O, ctx: Ctx) => string;
   min?: number;
   printSelectedOptions?: boolean;
+  selectAtLeastTextPosition?: "button" | "message";
 }
 
 type Click<O extends string = string> =
@@ -41,6 +42,7 @@ export class QuestionMultiSelect<O extends string = string> extends QuestionBase
   private options: O[];
   private min: number;
   private printSelectedOptions: boolean;
+  private selectAtLeastTextPosition: "button" | "message";
 
   constructor(config: QuestionMultiSelectConfig<O>) {
     super(config);
@@ -52,6 +54,7 @@ export class QuestionMultiSelect<O extends string = string> extends QuestionBase
     });
     this.min = clamp(0, config.min ?? 0, this.optionsKeyboard.length);
     this.printSelectedOptions = config.printSelectedOptions ?? true;
+    this.selectAtLeastTextPosition = config.selectAtLeastTextPosition || "button";
   }
 
   // TODO docs
@@ -95,7 +98,7 @@ export class QuestionMultiSelect<O extends string = string> extends QuestionBase
 
       const click = this.detectClick(localKeyboardId, ctx.callbackQuery);
       let kbOutdated = false;
-
+      let callbackQueryAnswered = false;
       switch (click.type) {
         case "select":
           if (!selected.includes(click.option)) {
@@ -114,12 +117,19 @@ export class QuestionMultiSelect<O extends string = string> extends QuestionBase
         case "confirm":
           if (selected.length >= this.min) {
             confirmed = true;
+          } else if (this.selectAtLeastTextPosition) {
+            await ctx.answerCallbackQuery(
+              ctx.t("question-multi-select.btn_select-at-least-n", { n: this.min }),
+            );
+            callbackQueryAnswered = true;
           }
           break;
         default:
           return await cnv.skip();
       }
-      await ctx.answerCallbackQuery();
+      if (!callbackQueryAnswered) {
+        await ctx.answerCallbackQuery();
+      }
       if (kbOutdated) {
         // update keyboard
         try {
@@ -249,9 +259,10 @@ export class QuestionMultiSelect<O extends string = string> extends QuestionBase
       kb.row();
     }
 
-    const confirmText = (selected.length < this.min)
-      ? ctx.t("question-multi-select.btn_select-at-least-n", { n: this.min })
-      : ctx.t("question-multi-select.btn_confirm");
+    const confirmText =
+      (selected.length < this.min && this.selectAtLeastTextPosition === "button")
+        ? ctx.t("question-multi-select.btn_select-at-least-n", { n: this.min })
+        : ctx.t("question-multi-select.btn_confirm");
     // e.g. "randglblid:randloclid:$"
     const cbqData = `${kbId}:$`;
     kb.text(confirmText, cbqData);
