@@ -132,12 +132,12 @@ class TasksQueue {
             }ms`,
           );
           const result = await task();
-          lastRequestAt = new Date();
-          this.lastTaskFinishedAt = new Date();
           resolve(result);
         } catch (error) {
           reject(error);
         } finally {
+          lastRequestAt = new Date();
+          this.lastTaskFinishedAt = new Date();
           this.queue.shift();
           this.runNextTask();
         }
