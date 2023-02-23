@@ -4,7 +4,7 @@ import type { Ctx } from "@/types.ts";
 export async function profileCmd(ctx: Ctx, next: NextFunction) {
   const member = await ctx.o12t.member();
   if (member?.isActive) {
-    await ctx.reply(ctx.t("profile-cmd", {
+    await ctx.reply(ctx.t("cmd_profile", {
       name: member.fullName,
       role: member.level ?? "—",
       langs: member.speakingLanguages.length > 0

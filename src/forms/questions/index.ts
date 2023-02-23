@@ -1,26 +1,17 @@
-import {
-  type MultiSelectAnswer,
-  QuestionMultiSelect,
-  type QuestionMultiSelectOptions,
-} from "./multi-select.ts";
-import { QuestionOpen, type QuestionOpenOptions } from "./open.ts";
-import { QuestionSelect, type QuestionSelectOptions } from "./select.ts";
-import { QuestionUrl, type QuestionUrlOptions } from "./url.ts";
+import { QuestionMultiSelect, type QuestionMultiSelectConfig } from "./multi-select.ts";
+import { QuestionOpen, type QuestionOpenConfig } from "./open.ts";
+import { QuestionSelect, type QuestionSelectConfig } from "./select.ts";
 
 export type Question =
   | QuestionMultiSelect
   | QuestionOpen
-  | QuestionSelect
-  | QuestionUrl;
+  | QuestionSelect;
 
 export {
-  type MultiSelectAnswer,
   QuestionMultiSelect,
-  type QuestionMultiSelectOptions,
+  type QuestionMultiSelectConfig,
   QuestionOpen,
-  type QuestionOpenOptions,
+  type QuestionOpenConfig,
   QuestionSelect,
-  type QuestionSelectOptions,
-  QuestionUrl,
-  type QuestionUrlOptions,
+  type QuestionSelectConfig,
 };

@@ -5,6 +5,8 @@ export interface BotConfig {
   NOTION_INTEGRATION_TOKEN: string;
   NOTION_MEMBERS_DB_ID: string;
   NOTION_CANDIDATES_DB_ID: string;
+  REDIS_HOSTNAME: string;
+  REDIS_PORT: string;
   WEBHOOK_SECRET_PATH?: string;
 }
 
@@ -17,6 +19,8 @@ async function loadConfig(): Promise<BotConfig> {
     "NOTION_INTEGRATION_TOKEN",
     "NOTION_MEMBERS_DB_ID",
     "NOTION_CANDIDATES_DB_ID",
+    "REDIS_HOSTNAME",
+    "REDIS_PORT",
   ] as const;
 
   const optional = [

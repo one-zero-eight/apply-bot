@@ -1,113 +1,174 @@
-import { Keyboard } from "grammy";
+import { InlineKeyboard } from "grammy";
+import type { CallbackQuery } from "grammy/types";
 import type { Cnv, Ctx } from "@/types.ts";
-import { QuestionAskOptions, QuestionBase, type QuestionBaseOptions } from "./base.ts";
+import { type AskParams, QuestionBase, type QuestionBaseConfig } from "./base.ts";
 import { escapeHtml } from "@/utils/html.ts";
+import { makeId } from "@/utils/random.ts";
 
-export type OptionId = string;
+type Click<O extends string = string> =
+  | ClickFalsy
+  | ClickSelect<O>;
+type ClickFalsy = { type: "falsy" };
+type ClickSelect<O extends string = string> = { type: "select"; option: O };
 
-export interface QuestionSelectOptions extends QuestionBaseOptions {
-  optionIdsKeyboard: OptionId[][];
+export interface QuestionSelectConfig<
+  O extends string = string,
+> extends QuestionBaseConfig {
+  optionsKeyboard: O[][];
+  getOptionLabel?: (option: O, ctx: Ctx) => string;
+  printSelectedOption?: boolean;
 }
 
-export class QuestionSelect extends QuestionBase<OptionId, QuestionBaseOptions> {
-  private optionIdsKeyboard: OptionId[][];
-  private optionIds: OptionId[];
+export class QuestionSelect<
+  O extends string = string,
+> extends QuestionBase<O, QuestionBaseConfig> {
+  private globalKeyboardId: string;
+  private optionsKeyboard: O[][];
+  private options: O[];
+  private getOptionLabel: (option: O, ctx: Ctx) => string;
+  private printSelectedOption: boolean;
 
-  constructor(options: QuestionSelectOptions) {
-    super(options);
-    this.optionIdsKeyboard = options.optionIdsKeyboard;
-    this.optionIds = this.optionIdsKeyboard.reduce((acc, row) => [...acc, ...row], []);
+  constructor(config: QuestionSelectConfig<O>) {
+    super(config);
+    this.globalKeyboardId = "qslct";
+    this.optionsKeyboard = config.optionsKeyboard;
+    this.options = this.optionsKeyboard.reduce((acc, row) => [...acc, ...row], []);
+    this.getOptionLabel = config.getOptionLabel ?? ((option, ctx) => {
+      return ctx.t(`${this.msgId}.${option}`);
+    });
+    this.printSelectedOption = config.printSelectedOption ?? true;
   }
 
+  // TODO docs
   public async ask(
     cnv: Cnv,
     ctx: Ctx,
-    { header, footer, old }: QuestionAskOptions<OptionId> = {},
-  ): Promise<OptionId> {
-    let sendMsg;
-    if (old !== undefined) {
-      const oldText = this.getOptionText(old, ctx);
-      sendMsg = async (ctx: Ctx) => {
-        const footerCombined = (footer ? footer + "\n\n" : "") + ctx.t(
-          "question-keep-old",
-          { old: escapeHtml(oldText) },
-        );
-        await this.sendSelectOptionsMessage(ctx, { header, footer: footerCombined });
-      };
-    } else {
-      sendMsg = async (ctx: Ctx) => {
-        await this.sendSelectOptionsMessage(ctx, { header, footer });
-      };
-    }
-
-    let selectedOptionId = null;
-    do {
-      await sendMsg(ctx);
-      const answer = await cnv.form.text(this.sendSelectOptionsMessage.bind(this));
-
-      if (old !== undefined && answer.trim() === "/keep") {
-        return old;
-      } else {
-        selectedOptionId = this.getOptionIdByAnswer(answer, ctx);
-      }
-    } while (selectedOptionId === null);
-    return selectedOptionId;
-  }
-
-  private async sendSelectOptionsMessage(
-    ctx: Ctx,
-    { header, footer }: { header?: string; footer?: string } = {},
-  ): Promise<void> {
-    const list = this.generateOptionsListTo(ctx);
-    const message = this.buildMessage({
+    {
       header,
-      message: `${ctx.t(this.msgId)}\n\n${ctx.t("question-select-one")}\n${list}`,
       footer,
-    });
-    const keyobard = this.generateOptionsKeyboard(ctx);
+      old,
+    }: AskParams<O> = {},
+  ): Promise<O> {
+    const localKeyboardId = await cnv.external(() => makeId(16));
 
-    await ctx.reply(message, { reply_markup: keyobard });
-  }
+    const footerWithSaved = old != undefined
+      ? (footer ? footer + "\n\n" : "") + ctx.t(
+        "question-keep-saved",
+        { saved: escapeHtml(this.getOptionLabel(old, ctx)) },
+      )
+      : footer;
 
-  private generateOptionsListTo(ctx: Ctx): string {
-    return this.optionIds
-      .map((id, i) => `/${i + 1} ${this.getOptionText(id, ctx)}`)
-      .join("\n");
-  }
+    const sentMessage = await ctx.reply(
+      this.buildMessage({
+        header,
+        message: ctx.t(this.msgId, this.getMessageOptions?.(cnv, ctx)),
+        footer: footerWithSaved,
+      }),
+      {
+        reply_markup: this.buildKeyboard(localKeyboardId, ctx),
+        disable_web_page_preview: true,
+      },
+    );
 
-  private generateOptionsKeyboard(ctx: Ctx): Keyboard {
-    const keyboard = new Keyboard();
-    for (const row of this.optionIdsKeyboard) {
-      for (const id of row) {
-        keyboard.text(this.getOptionText(id, ctx));
+    ctx = await cnv.wait();
+    const message = (ctx.message?.text ?? "").trim();
+
+    if (message === "/undo" || message === "/back") {
+      return await cnv.skip();
+    }
+
+    let selected = null;
+    // user wants to /keep old answer
+    if (old != null && message === "/keep") {
+      selected = old;
+    } else {
+      const click = this.detectClick(localKeyboardId, ctx.callbackQuery);
+      selected = click.type === "select" ? click.option : null;
+      if (selected == null) {
+        return await cnv.skip();
       }
-      keyboard.row();
-    }
-    return keyboard
-      .resized()
-      .oneTime();
-  }
-
-  private getOptionIdByAnswer(answer: string, ctx: Ctx): OptionId | null {
-    answer = answer.trim();
-
-    const numMatch = answer.match(/^\s*\/?(\d+)\s*$/);
-    const answerNum = numMatch ? parseInt(numMatch[1]) : NaN;
-    if (!isNaN(answerNum) && answerNum >= 1 && answerNum <= this.optionIds.length) {
-      return this.optionIds[answerNum - 1];
+      await ctx.answerCallbackQuery();
     }
 
-    for (let i = 0; i < this.optionIds.length; i++) {
-      const id = this.optionIds[i];
-      if (this.getOptionText(id, ctx).trim() === answer) {
-        return id;
+    try {
+      if (this.printSelectedOption) {
+        ctx.api.editMessageText(
+          sentMessage.chat.id,
+          sentMessage.message_id,
+          this.buildMessage({
+            header,
+            message: ctx.t(this.msgId, this.getMessageOptions?.(cnv, ctx)),
+            footer: (footer ? footer + "\n\n" : "") + ctx.t("question-selected", {
+              selected: this.getOptionLabel(selected, ctx),
+            }),
+          }),
+        );
+        // remove keyboard and print selected option
+      } else {
+        await ctx.api.editMessageReplyMarkup(
+          sentMessage.chat.id,
+          sentMessage.message_id,
+          { reply_markup: undefined },
+        );
       }
+    } catch (err) {
+      cnv.error("error editing multi-select question message", err);
     }
 
-    return null;
+    return selected;
   }
 
-  public getOptionText(id: OptionId, ctx: Ctx) {
-    return ctx.t(`${this.msgId}.${id}`);
+  public stringifyAnswer(answer: O, ctx: Ctx): string {
+    return this.getOptionLabel(answer, ctx);
+  }
+
+  // TODO docs
+  private detectClick(id: string, callbackQuery?: CallbackQuery): Click<O> {
+    const falsy: ClickFalsy = { type: "falsy" };
+
+    if (callbackQuery === undefined || callbackQuery.data === undefined) {
+      return falsy;
+    }
+
+    const data = callbackQuery.data;
+    const parts = data.split(":");
+    if (parts.length !== 3) {
+      return falsy;
+    }
+    if (parts[0] !== this.globalKeyboardId || parts[1] !== id) {
+      return falsy;
+    }
+
+    const i = parts[2];
+    if (!i.match(/^\d+$/)) {
+      return falsy;
+    }
+    const num = Number.parseInt(i);
+    if (0 <= num && num < this.options.length) {
+      return { type: "select", option: this.options[num] };
+    }
+    return falsy;
+  }
+
+  // TODO docs
+  private buildKeyboard(localKeyboardId: string, ctx: Ctx): InlineKeyboard {
+    const kb = new InlineKeyboard();
+    const kbId = `${this.globalKeyboardId}:${localKeyboardId}`;
+    let i = 0;
+    for (const row of this.optionsKeyboard) {
+      for (const optionId of row) {
+        const label = this.getOptionLabel(optionId, ctx);
+        const cbqData = `${kbId}:${i}`; // e.g. "randglblid:randloclid:0"
+        kb.text(label, cbqData);
+        i++;
+      }
+      kb.row();
+    }
+
+    return kb;
+  }
+
+  public stringifySelected(selected: O, ctx: Ctx): string {
+    return this.getOptionLabel(selected, ctx);
   }
 }

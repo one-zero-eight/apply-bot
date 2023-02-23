@@ -1,4 +1,6 @@
+import { delay } from "async";
 import { Client, collectPaginatedAPI, isFullPage } from "notion";
+import { msFrom } from "../utils/dates.ts";
 import type {
   Filter,
   Page,
@@ -9,10 +11,11 @@ import type {
 
 export class Notion {
   private client: Client;
+  private queue: TasksQueue;
 
   constructor(config: NotionConfig) {
     config = {
-      timeoutMs: 6000,
+      timeoutMs: 10000,
       ...config,
     };
 
@@ -20,9 +23,11 @@ export class Notion {
       auth: config.integrationApiToken,
       timeoutMs: config.timeoutMs,
     });
+
+    this.queue = new TasksQueue();
   }
 
-  public async queryDb<S extends PropertiesSchema>({
+  public queryDb<S extends PropertiesSchema>({
     databaseId,
     filter,
     filterProps,
@@ -35,25 +40,43 @@ export class Notion {
       filter: filter as any,
     };
 
-    let pages: (Parameters<typeof isFullPage>[0])[];
-    if (fetchAll) {
-      pages = await collectPaginatedAPI(this.client.databases.query, options);
-    } else {
-      pages = (await this.client.databases.query(options)).results;
-    }
+    return new Promise((resolve, reject) => {
+      this.queue.addTask(async () => {
+        try {
+          let pages: (Parameters<typeof isFullPage>[0])[];
+          if (fetchAll) {
+            pages = await collectPaginatedAPI(this.client.databases.query, options);
+          } else {
+            pages = (await this.client.databases.query(options)).results;
+          }
 
-    return pages.filter(isFullPage) as unknown as Page<S>[];
+          resolve(pages.filter(isFullPage) as unknown as Page<S>[]);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
   }
 
-  public async createPage<S extends PropertiesSchema>({
+  public createPage<S extends PropertiesSchema>({
     databaseId,
     properties,
   }: CreatePageOptions<S>) {
-    return await this.client.pages.create({
-      parent: {
-        database_id: databaseId,
-      },
-      properties: properties,
+    return new Promise((resolve, reject) => {
+      this.queue.addTask(async () => {
+        try {
+          resolve(
+            await this.client.pages.create({
+              parent: {
+                database_id: databaseId,
+              },
+              properties: properties,
+            }),
+          );
+        } catch (error) {
+          reject(error);
+        }
+      });
     });
   }
 }
@@ -80,4 +103,59 @@ export interface CreatePageOptions<S extends PropertiesSchema> {
 
 export function richTextToString(richText: RichText[]) {
   return richText.map((richText) => richText.plain_text).join("");
+}
+
+class TasksQueue {
+  private lastTaskFinishedAt: Date | null;
+  private queue: Array<() => Promise<unknown>>;
+  private timeBetweenTasksMs: number;
+
+  constructor(maxTasksPerSecond: number = 2) {
+    this.queue = [];
+    this.lastTaskFinishedAt = null;
+    this.timeBetweenTasksMs = 1000 / maxTasksPerSecond;
+  }
+
+  public addTask<T>(task: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.queue.push(async () => {
+        try {
+          const waitTimeMs = this.getWaitTimeMs();
+          if (waitTimeMs > 0) {
+            await delay(waitTimeMs);
+          }
+          const result = await task();
+          this.lastTaskFinishedAt = new Date();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        } finally {
+          this.queue.shift();
+          this.runNextTask();
+        }
+      });
+
+      // Run task if it's the only one in the queue.
+      // If it is not, it will be run when the previous task is finished.
+      if (this.queue.length === 1) {
+        this.runNextTask();
+      }
+    });
+  }
+
+  private runNextTask() {
+    if (this.queue.length > 0) {
+      this.queue[0]();
+    }
+  }
+
+  private getWaitTimeMs() {
+    if (!this.lastTaskFinishedAt) {
+      return 0;
+    }
+
+    const waitTimeMs = this.timeBetweenTasksMs - msFrom(this.lastTaskFinishedAt);
+
+    return waitTimeMs > 0 ? waitTimeMs : 0;
+  }
 }

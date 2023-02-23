@@ -1,30 +1,35 @@
 import type { Cnv, Ctx } from "@/types.ts";
 
-export interface QuestionBaseOptions {
+export interface QuestionBaseConfig {
   msgId: string;
+  getMessageOptions?: (cnv: Cnv, ctx: Ctx) => Record<string, string | number | Date>;
 }
 
-export interface QuestionAskOptions<T> {
-  old?: T;
+export interface AskParams<T> {
   header?: string;
   footer?: string;
+  old?: T;
 }
 
 export abstract class QuestionBase<
   T,
-  O extends QuestionBaseOptions = QuestionBaseOptions,
+  O extends QuestionBaseConfig = QuestionBaseConfig,
 > {
   protected _msgId: string;
+  protected getMessageOptions: QuestionBaseConfig["getMessageOptions"];
 
-  constructor({ msgId }: O) {
+  constructor({ msgId, getMessageOptions }: O) {
     this._msgId = msgId;
+    this.getMessageOptions = getMessageOptions;
   }
 
   public abstract ask(
     cnv: Cnv,
     ctx: Ctx,
-    options?: QuestionAskOptions<T>,
+    params?: AskParams<T>,
   ): Promise<T>;
+
+  public abstract stringifyAnswer(answer: T, ctx: Ctx): string;
 
   public get msgId(): string {
     return this._msgId;
