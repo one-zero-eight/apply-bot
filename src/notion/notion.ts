@@ -9,6 +9,8 @@ import type {
   RichText,
 } from "./types.ts";
 
+let lastRequestAt = null as Date | null;
+
 export class Notion {
   private client: Client;
   private queue: TasksQueue;
@@ -124,7 +126,13 @@ class TasksQueue {
           if (waitTimeMs > 0) {
             await delay(waitTimeMs);
           }
+          console.log(
+            `Notion: executing task from queue +${
+              lastRequestAt ? msFrom(lastRequestAt) : "?"
+            }ms`,
+          );
           const result = await task();
+          lastRequestAt = new Date();
           this.lastTaskFinishedAt = new Date();
           resolve(result);
         } catch (error) {
