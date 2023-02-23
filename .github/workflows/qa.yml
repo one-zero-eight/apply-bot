@@ -1,20 +1,21 @@
-name: Deno Q&A
+name: QA
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "preview"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "preview"]
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  lint-and-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup repo
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Setup Deno

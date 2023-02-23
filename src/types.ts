@@ -1,12 +1,13 @@
-import type { Context } from "grammy";
-import type { SessionFlavor } from "grammy";
+import type { Context, SessionFlavor } from "grammy";
 import type { Conversation, ConversationFlavor } from "grammy-conversations";
 import type { I18nFlavor } from "grammy-i18n";
 import type { O12tFlavor } from "@/plugins/o12t.ts";
-import type { CandidateApplicationData } from "@/handlers/conversations/candidate-application.ts";
+import type {
+  SessionData as CandidateApplicationSessionData,
+} from "@/handlers/conversations/application.ts";
 
 export interface SessionData {
-  application: CandidateApplicationData;
+  candidateCnv: CandidateApplicationSessionData;
 }
 
 export type Ctx =

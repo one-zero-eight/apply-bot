@@ -1,9 +1,11 @@
-import { delay } from "async";
 import { Context, MiddlewareFn } from "grammy";
 import { Notion, richTextToString } from "@/notion/notion.ts";
 import type { Ctx } from "@/types.ts";
 import { config } from "@/config.ts";
-import { DepartmentId } from "../departments.ts";
+import { msFrom } from "@/utils/dates.ts";
+import { DepartmentId, departmentsIds, departmentsInfo } from "@/departments.ts";
+import { CandidateApplication } from "@/handlers/conversations/application.ts";
+import { RichText, RichTextText } from "@/notion/types.ts";
 
 const notionMembersDbSchema = {
   "Active": "checkbox",
@@ -21,12 +23,9 @@ type NotionMembersDbSchema = typeof notionMembersDbSchema;
 const notionCandidatesDbSchema = {
   "Name": "title",
   "Status": "select",
+  "Common QA": "rich_text",
   "Departments": "multi_select",
-  "Answers": "rich_text",
-  "Skills": "rich_text",
-  "Submitted": "date",
-  "Motivation": "rich_text",
-  "Knew From": "rich_text",
+  "Departments QA": "rich_text",
   "Telegram": "url",
   "Telegram ID": "rich_text",
 } as const;
@@ -50,14 +49,12 @@ export interface Member {
 }
 
 export interface Candidate {
-  fullName: string;
+  name: string;
   telegramId: number;
   telegramUsername: string;
-  skills: string;
+  commonQa: string;
   departments: { [D in DepartmentId]: boolean };
-  answers: string;
-  motivation: string;
-  whereKnew: string;
+  departmentsQa: string;
 }
 
 export type O12tOptions = {
@@ -72,7 +69,7 @@ export interface O12tFlavor {
     getCandidateByTelegramId: (telegramId: number) => Promise<Candidate | null>;
     member: () => Promise<Member | null>;
     candidate: () => Promise<Candidate | null>;
-    addCandidate: (candidate: Candidate) => Promise<void>;
+    addCandidate: (candidate: CandidateApplication) => Promise<void>;
   };
 }
 
@@ -87,7 +84,6 @@ export class O12t<C extends Context> {
   private notion: Notion;
   private membersDatabaseId: string;
   private candidatesDatabaseId: string;
-  private tasksQueue: TasksQueue;
   private membersLastRefreshedAt: Date | null;
   private cachedMembers: Record<number, Member>;
   private candidatesLastRefreshedAt: Date | null;
@@ -101,7 +97,6 @@ export class O12t<C extends Context> {
     this.notion = new Notion({ integrationApiToken: notionApiToken });
     this.membersDatabaseId = membersDatabaseId;
     this.candidatesDatabaseId = candidatesDatabaseId;
-    this.tasksQueue = new TasksQueue();
     this.membersLastRefreshedAt = null;
     this.cachedMembers = {};
     this.candidatesLastRefreshedAt = null;
@@ -120,17 +115,17 @@ export class O12t<C extends Context> {
     return actualCandidates[telegramId] ?? null;
   }
 
-  public async addCandidate(candidate: Candidate): Promise<void> {
+  public async addCandidate(application: CandidateApplication): Promise<void> {
     // check if candidate already exists
     const actualCandidates = await this.getActualCandidates();
-    if (actualCandidates[candidate.telegramId]) {
+    if (actualCandidates[application.telegramId]) {
       throw new CandidateAlreadyExistsError(
-        `Candidate with Telegram ID ${candidate.telegramId} already exists`,
+        `Candidate with Telegram ID ${application.telegramId} already exists.`,
       );
     }
-
-    const now = new Date();
-    const notionNow = now.toISOString().split("T")[0];
+    const departmentsQaFormatted = formatCandidateApplicationDepartmentsQa(
+      application.departmentsQa,
+    );
 
     await this.notion.createPage({
       databaseId: this.candidatesDatabaseId,
@@ -139,7 +134,7 @@ export class O12t<C extends Context> {
           title: [
             {
               text: {
-                content: candidate.fullName,
+                content: application.name,
               },
             },
           ],
@@ -153,63 +148,46 @@ export class O12t<C extends Context> {
           rich_text: [
             {
               text: {
-                content: candidate.telegramId.toString(),
+                content: application.telegramId.toString(),
               },
             },
           ],
         },
         "Telegram": {
-          url: candidate.telegramUsername ? `t.me/${candidate.telegramUsername}` : "",
+          url: application.telegramUsername
+            ? `t.me/${application.telegramUsername}`
+            : "",
         },
-        "Skills": {
-          rich_text: [
-            {
-              text: {
-                content: candidate.skills,
-              },
-            },
-          ],
+        "Common QA": {
+          rich_text: formatQa(application.generalQa),
         },
         "Departments": {
-          multi_select: Object.entries(candidate.departments)
-            .filter(([_, isInterested]) => isInterested)
-            .map(([departmentId]) => ({
+          multi_select: application.selectedDepartments
+            .map((departmentId) => ({
               name: departmentIdSelectNameMap[departmentId as DepartmentId],
             })),
         },
-        "Answers": {
-          rich_text: [
-            {
-              text: {
-                content: candidate.answers,
-              },
-            },
-          ],
-        },
-        "Motivation": {
-          rich_text: [
-            {
-              text: {
-                content: candidate.motivation,
-              },
-            },
-          ],
-        },
-        "Knew From": {
-          rich_text: [
-            {
-              text: {
-                content: candidate.whereKnew,
-              },
-            },
-          ],
-        },
-        "Submitted": {
-          date: { start: notionNow },
+        "Departments QA": {
+          rich_text: departmentsQaFormatted,
         },
         // deno-lint-ignore no-explicit-any
       } as any,
     });
+
+    const candidate: Candidate = {
+      name: application.name,
+      telegramId: application.telegramId,
+      telegramUsername: application.telegramUsername,
+      commonQa: application.generalQa.map(([q, a]) => `${q}\n${a}`).join("\n\n"),
+      departments: Object.fromEntries(
+        departmentsIds.map((d) => [d, application.selectedDepartments.includes(d)]),
+      ) as {
+        [D in DepartmentId]: boolean;
+      },
+      departmentsQa: stringifyCandidateApplicationDepartmentsQa(
+        application.departmentsQa,
+      ),
+    };
 
     // also add in the cache
     this.cachedCandidates[candidate.telegramId] = candidate;
@@ -218,52 +196,51 @@ export class O12t<C extends Context> {
   private getActualMembers(): Promise<Record<number, Member>> {
     if (
       this.membersLastRefreshedAt &&
-      datesDiffMs(this.membersLastRefreshedAt, new Date()) <
-        this.MEMBERS_DB_REFRESH_RATE_MS
+      msFrom(this.membersLastRefreshedAt) < this.MEMBERS_DB_REFRESH_RATE_MS
     ) {
       return Promise.resolve(this.cachedMembers);
     }
 
     if (!this.membersFetchingPromise) {
-      this.membersFetchingPromise = new Promise((resolve, reject) => {
-        this.tasksQueue.addTask(async () => {
-          try {
-            const members = await this.notion.queryDb<NotionMembersDbSchema>({
-              databaseId: this.membersDatabaseId,
-            });
+      this.membersFetchingPromise = (async () => {
+        try {
+          const members = await this.notion.queryDb<NotionMembersDbSchema>({
+            databaseId: this.membersDatabaseId,
+          });
 
-            const actualMembers: Record<number, Member> = {};
+          const actualMembers: Record<number, Member> = {};
 
-            for (const member of members) {
-              let telegramId = Number.parseInt(
-                richTextToString(member.properties["Telegram ID"].rich_text),
-              );
-              if (isNaN(telegramId)) {
-                telegramId = 0;
-              }
-              const joinedDateStr = member.properties["Joined"]?.date?.start;
-
-              actualMembers[telegramId] = {
-                fullName: richTextToString(member.properties["Name"].title),
-                telegramId: telegramId,
-                isActive: member.properties["Active"].checkbox,
-                level: member.properties["Level"].select?.name,
-                joined: joinedDateStr ? new Date(joinedDateStr) : undefined,
-                speakingLanguages: member.properties["Languages"].multi_select.map((
-                  opt,
-                ) => opt.name),
-              };
+          for (const member of members) {
+            let telegramId = Number.parseInt(
+              richTextToString(member.properties["Telegram ID"].rich_text),
+            );
+            if (isNaN(telegramId)) {
+              telegramId = 0;
             }
+            const joinedDateStr = member.properties["Joined"]?.date?.start;
 
-            this.cachedMembers = actualMembers;
-            this.membersLastRefreshedAt = new Date();
-            resolve(actualMembers);
-            this.membersFetchingPromise = null;
-          } catch (error) {
-            reject(error);
+            actualMembers[telegramId] = {
+              fullName: richTextToString(member.properties["Name"].title),
+              telegramId: telegramId,
+              isActive: member.properties["Active"].checkbox,
+              level: member.properties["Level"].select?.name,
+              joined: joinedDateStr ? new Date(joinedDateStr) : undefined,
+              speakingLanguages: member.properties["Languages"].multi_select.map((
+                opt,
+              ) => opt.name),
+            };
           }
-        });
-      });
+
+          this.cachedMembers = actualMembers;
+          this.membersLastRefreshedAt = new Date();
+          return actualMembers;
+        } catch (err) {
+          console.error("error retrieving members from Notion", err);
+          return {};
+        } finally {
+          this.membersFetchingPromise = null;
+        }
+      })();
     }
 
     return this.membersFetchingPromise;
@@ -272,76 +249,69 @@ export class O12t<C extends Context> {
   private getActualCandidates(): Promise<Record<number, Candidate>> {
     if (
       this.candidatesLastRefreshedAt &&
-      datesDiffMs(this.candidatesLastRefreshedAt, new Date()) <
-        this.CANDIDATES_DB_REFRESH_RATE_MS
+      msFrom(this.candidatesLastRefreshedAt) < this.CANDIDATES_DB_REFRESH_RATE_MS
     ) {
       return Promise.resolve(this.cachedCandidates);
     }
 
     if (!this.candidatesFetchingPromise) {
-      this.candidatesFetchingPromise = new Promise((resolve, reject) => {
-        this.tasksQueue.addTask(async () => {
-          try {
-            const candidates = await this.notion.queryDb<
-              NotionCandidatesDbSchema
-            >({
-              databaseId: this.candidatesDatabaseId,
-            });
+      this.candidatesFetchingPromise = (async () => {
+        try {
+          const candidates = await this.notion.queryDb<
+            NotionCandidatesDbSchema
+          >({
+            databaseId: this.candidatesDatabaseId,
+          });
 
-            const actualCandidates: Record<number, Candidate> = {};
+          const actualCandidates: Record<number, Candidate> = {};
 
-            for (const candidate of candidates) {
-              let telegramId = Number.parseInt(
-                richTextToString(candidate.properties["Telegram ID"].rich_text),
-              );
-              if (isNaN(telegramId)) {
-                telegramId = 0;
-              }
-
-              const departmentNames = candidate.properties["Departments"].multi_select
-                .map((opt) => opt.name);
-              const departmentIds = Object.values(departmentNames).filter((
-                [_, option],
-              ) => departmentNames.includes(option));
-              const departments: Record<DepartmentId, boolean> = {
-                tech: false,
-                design: false,
-                media: false,
-                management: false,
-              };
-              for (const departmentId of departmentIds) {
-                departments[departmentId as DepartmentId] = true;
-              }
-
-              actualCandidates[telegramId] = {
-                fullName: richTextToString(candidate.properties["Name"].title),
-                telegramId: telegramId,
-                telegramUsername: candidate.properties["Telegram"].url,
-                skills: richTextToString(
-                  candidate.properties.Skills.rich_text,
-                ),
-                departments: departments,
-                answers: richTextToString(
-                  candidate.properties["Answers"].rich_text,
-                ),
-                motivation: richTextToString(
-                  candidate.properties["Motivation"].rich_text,
-                ),
-                whereKnew: richTextToString(
-                  candidate.properties["Knew From"].rich_text,
-                ),
-              };
+          for (const candidate of candidates) {
+            let telegramId = Number.parseInt(
+              richTextToString(candidate.properties["Telegram ID"].rich_text),
+            );
+            if (isNaN(telegramId)) {
+              telegramId = 0;
             }
 
-            this.cachedCandidates = actualCandidates;
-            this.candidatesLastRefreshedAt = new Date();
-            resolve(actualCandidates);
-            this.candidatesFetchingPromise = null;
-          } catch (error) {
-            reject(error);
+            const departmentNames = candidate.properties["Departments"].multi_select
+              .map((opt) => opt.name);
+            const departmentIds = Object.values(departmentNames).filter((
+              [_, option],
+            ) => departmentNames.includes(option));
+            const departments: Record<DepartmentId, boolean> = {
+              tech: false,
+              design: false,
+              media: false,
+              management: false,
+            };
+            for (const departmentId of departmentIds) {
+              departments[departmentId as DepartmentId] = true;
+            }
+
+            actualCandidates[telegramId] = {
+              telegramId: telegramId,
+              telegramUsername: candidate.properties["Telegram"].url,
+              name: richTextToString(candidate.properties["Name"].title),
+              commonQa: richTextToString(
+                candidate.properties["Common QA"].rich_text,
+              ),
+              departments: departments,
+              departmentsQa: richTextToString(
+                candidate.properties["Departments QA"].rich_text,
+              ),
+            };
           }
-        });
-      });
+
+          this.cachedCandidates = actualCandidates;
+          this.candidatesLastRefreshedAt = new Date();
+          return actualCandidates;
+        } catch (err) {
+          console.error("error retrieving candidates from Notion", err);
+          return {};
+        } finally {
+          this.candidatesFetchingPromise = null;
+        }
+      })();
     }
 
     return this.candidatesFetchingPromise;
@@ -376,66 +346,56 @@ export class O12t<C extends Context> {
   }
 }
 
-class TasksQueue {
-  private lastTaskFinishedAt: Date | null;
-  private queue: Array<() => Promise<unknown>>;
-  private timeBetweenTasksMs: number;
-
-  constructor(maxTasksPerSecond: number = 2) {
-    this.queue = [];
-    this.lastTaskFinishedAt = null;
-    this.timeBetweenTasksMs = 1000 / maxTasksPerSecond;
-  }
-
-  public addTask<T>(task: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      this.queue.push(async () => {
-        try {
-          const waitTimeMs = this.getWaitTimeMs();
-          if (waitTimeMs > 0) {
-            await delay(waitTimeMs);
-          }
-          const result = await task();
-          this.lastTaskFinishedAt = new Date();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        } finally {
-          this.queue.shift();
-          this.runNextTask();
-        }
-      });
-
-      // Run task if it's the only one in the queue.
-      // If it is not, it will be run when the previous task is finished.
-      if (this.queue.length === 1) {
-        this.runNextTask();
-      }
-    });
-  }
-
-  private runNextTask() {
-    if (this.queue.length > 0) {
-      this.queue[0]();
-    }
-  }
-
-  private getWaitTimeMs() {
-    if (!this.lastTaskFinishedAt) {
-      return 0;
-    }
-
-    const waitTimeMs = this.timeBetweenTasksMs - datesDiffMs(
-      this.lastTaskFinishedAt,
-      new Date(),
-    );
-
-    return waitTimeMs > 0 ? waitTimeMs : 0;
-  }
+function formatCandidateApplicationDepartmentsQa(
+  qa: CandidateApplication["departmentsQa"],
+): RichText[] {
+  return formatQa(
+    departmentsIds
+      .filter((id) => (qa[id] ?? []).length > 0)
+      .reduce((acc, id) => [
+        ...acc,
+        ...(qa[id]!.map(([q, a], i) =>
+          [`${departmentsInfo[id].displayName} Q${i + 1} — ${q}`, a] as [string, string]
+        )),
+      ], [] as [string, string][]),
+  );
 }
 
-function datesDiffMs(a: Date, b: Date) {
-  return Math.abs(a.getTime() - b.getTime());
+function formatQa(
+  qa: [string, string][],
+): RichText[] {
+  return qa.reduce((acc, [q, a]) => [
+    ...acc,
+    {
+      type: "text",
+      text: { content: q + "\n" },
+      annotations: { bold: true },
+    } as RichTextText,
+    {
+      type: "text",
+      text: { content: a + "\n\n" },
+      annotations: { color: "blue" },
+    } as RichTextText,
+  ], [] as RichText[]);
+}
+
+function stringifyCandidateApplicationDepartmentsQa(
+  qa: CandidateApplication["departmentsQa"],
+): string {
+  const rows: string[] = [];
+  for (const dep of departmentsIds) {
+    const depQa = qa[dep];
+    if (depQa === undefined) {
+      continue;
+    }
+    const depName = departmentsInfo[dep].displayName;
+    for (let i = 0; i < depQa.length; i++) {
+      const [question, answer] = depQa[i];
+      rows.push(`${depName} Q${i + 1} — ${question}`);
+      rows.push(answer + "\n");
+    }
+  }
+  return rows.join("\n");
 }
 
 // configure plugin

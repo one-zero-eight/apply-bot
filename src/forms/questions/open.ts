@@ -1,90 +1,110 @@
 import { Cnv, Ctx } from "@/types.ts";
-import type { StringParser } from "@/utils/parsing.ts";
 import { escapeHtml } from "@/utils/html.ts";
-import { QuestionBase, type QuestionBaseOptions } from "./base.ts";
+import type { StringParser } from "@/utils/parsing.ts";
+import { type AskParams, QuestionBase, type QuestionBaseConfig } from "./base.ts";
 
-export type QuestionOpenOptions<T = string> =
+export type QuestionOpenConfig<T extends string = string> =
   & (T extends string ? {
       parser?: StringParser<T> | undefined;
     }
     : {
       parser: StringParser<T>;
     })
-  & QuestionBaseOptions;
+  & QuestionBaseConfig
+  & {
+    maxSize?: number;
+  };
 
-export class QuestionOpen<T = string> extends QuestionBase<T, QuestionBaseOptions> {
-  private parser?: QuestionOpenOptions<T>["parser"];
+export class QuestionOpen<
+  T extends string = string,
+> extends QuestionBase<T, QuestionBaseConfig> {
+  private parser?: QuestionOpenConfig<T>["parser"];
+  private maxSize: number;
 
-  constructor(options: QuestionOpenOptions<T>) {
-    super(options);
-    this.parser = options.parser;
+  constructor(config: QuestionOpenConfig<T>) {
+    super(config);
+    this.parser = config.parser;
+    this.maxSize = config.maxSize ?? 1000;
   }
 
-  public ask(cnv: Cnv, ctx: Ctx): Promise<T> {
-    return this._ask(cnv, ctx, false);
-  }
-
-  public askOrSkip(cnv: Cnv, ctx: Ctx): Promise<T | null> {
-    return this._ask(cnv, ctx, true);
-  }
-
-  public askOrKeepOld(cnv: Cnv, ctx: Ctx, old: T, oldAsText?: string): Promise<T> {
-    return this._ask(cnv, ctx, false, old, oldAsText);
-  }
-
-  private async _ask<S extends boolean>(
+  public async ask(
     cnv: Cnv,
     ctx: Ctx,
-    canSkip: S,
-    old?: T,
-    oldAsText?: string,
-  ): Promise<S extends true ? T | null : T> {
-    const sendMsg = old !== undefined
-      ? async (ctx: Ctx) => {
-        await this.sendAskingMessage(ctx, {
-          footer: ctx.t(
-            "question-keep-old",
-            { old: escapeHtml(oldAsText ?? `${old}`) },
-          ),
-        });
-      }
-      : this.sendAskingMessage.bind(this);
+    {
+      header,
+      footer,
+      old,
+    }: AskParams<T> = {},
+  ): Promise<T> {
+    let sendMsg;
+    if (old != undefined) {
+      sendMsg = async (ctx: Ctx) => {
+        const footerCombined = (footer ? footer + "\n\n" : "") + ctx.t(
+          "question-keep-saved",
+          { saved: escapeHtml(old) },
+        );
+        await this.sendAskingMessage(cnv, ctx, { header, footer: footerCombined });
+      };
+    } else {
+      sendMsg = async (ctx: Ctx) => {
+        await this.sendAskingMessage(cnv, ctx, { header, footer });
+      };
+    }
 
-    let answer = null;
-    do {
-      await sendMsg(ctx);
-      answer = await cnv.form.text(sendMsg);
+    await sendMsg(ctx);
+    ctx = await cnv.wait();
+    if (ctx.message === undefined) {
+      return await cnv.skip();
+    }
+    let answer: string | null | undefined = ctx.message.text ?? ctx.message.caption;
+    if (answer === undefined) {
+      return await cnv.skip();
+    }
+    const trimmed = answer.trim();
 
-      if (canSkip && answer.trim() === "/skip") {
-        return null as (S extends true ? T | null : T);
-      } else if (old !== undefined && answer.trim() === "/keep") {
+    if (trimmed === "/keep") {
+      if (old != null) {
         return old;
-      } else if (this.parser) {
-        answer = this.parser(answer);
       }
-    } while (answer === null);
+      return await cnv.skip();
+    } else if (trimmed === "/undo" || trimmed === "/back") {
+      return await cnv.skip();
+    } else if (this.parser) {
+      answer = this.parser(answer);
+    }
+
+    if ((answer?.length ?? 0) > this.maxSize) {
+      await ctx.reply(ctx.t("question-answer-too-long", {
+        limit: this.maxSize,
+        current: answer?.length ?? 0,
+      }));
+      return await cnv.skip();
+    }
+
+    if (!answer || trimmed === "") {
+      await sendMsg(ctx);
+      return await cnv.skip();
+    }
 
     return answer as T;
   }
 
+  public stringifyAnswer(answer: T): string {
+    return `${answer}`;
+  }
+
   private async sendAskingMessage(
+    cnv: Cnv,
     ctx: Ctx,
-    options?: { header?: string; footer?: string },
+    { header, footer }: { header?: string; footer?: string } = {},
   ) {
-    const { header, footer } = options ?? {};
-
-    let msg = "";
-
-    if (header) {
-      msg += header + "\n\n";
-    }
-
-    msg += ctx.t(this.msgId);
-
-    if (footer) {
-      msg += "\n\n" + footer;
-    }
-
-    await ctx.reply(msg);
+    return await ctx.reply(
+      this.buildMessage({
+        header,
+        message: ctx.t(this.msgId, this.getMessageOptions?.(cnv, ctx)),
+        footer,
+      }),
+      { reply_markup: { remove_keyboard: true }, disable_web_page_preview: true },
+    );
   }
 }

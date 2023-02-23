@@ -1,37 +1,45 @@
 import type { Cnv, Ctx } from "@/types.ts";
 
-export interface QuestionBaseOptions {
+export interface QuestionBaseConfig {
   msgId: string;
+  getMessageOptions?: (cnv: Cnv, ctx: Ctx) => Record<string, string | number | Date>;
+}
+
+export interface AskParams<T> {
+  header?: string;
+  footer?: string;
+  old?: T;
 }
 
 export abstract class QuestionBase<
   T,
-  O extends QuestionBaseOptions = QuestionBaseOptions,
+  O extends QuestionBaseConfig = QuestionBaseConfig,
 > {
   protected _msgId: string;
+  protected getMessageOptions: QuestionBaseConfig["getMessageOptions"];
 
-  constructor({ msgId }: O) {
+  constructor({ msgId, getMessageOptions }: O) {
     this._msgId = msgId;
+    this.getMessageOptions = getMessageOptions;
   }
 
   public abstract ask(
     cnv: Cnv,
     ctx: Ctx,
+    params?: AskParams<T>,
   ): Promise<T>;
 
-  public abstract askOrSkip(
-    cnv: Cnv,
-    ctx: Ctx,
-  ): Promise<T | null>;
-
-  public abstract askOrKeepOld(
-    cnv: Cnv,
-    ctx: Ctx,
-    old: T,
-    oldAsText?: string,
-  ): Promise<T>;
+  public abstract stringifyAnswer(answer: T, ctx: Ctx): string;
 
   public get msgId(): string {
     return this._msgId;
+  }
+
+  protected buildMessage({
+    message: msg,
+    footer: f,
+    header: h,
+  }: { message: string; footer?: string; header?: string }): string {
+    return `${h ? h + "\n\n" : ""}${msg}${f ? "\n\n" + f : ""}`;
   }
 }

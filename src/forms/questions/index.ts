@@ -1,12 +1,17 @@
-import { QuestionOpen } from "./open.ts";
-import { QuestionSelect } from "./select.ts";
-import { QuestionUrl } from "./url.ts";
-
-export { QuestionOpen, type QuestionOpenOptions } from "./open.ts";
-export { QuestionSelect, type QuestionSelectOptions } from "./select.ts";
-export { QuestionUrl, type QuestionUrlOptions } from "./url.ts";
+import { QuestionMultiSelect, type QuestionMultiSelectConfig } from "./multi-select.ts";
+import { QuestionOpen, type QuestionOpenConfig } from "./open.ts";
+import { QuestionSelect, type QuestionSelectConfig } from "./select.ts";
 
 export type Question =
+  | QuestionMultiSelect
   | QuestionOpen
-  | QuestionSelect
-  | QuestionUrl;
+  | QuestionSelect;
+
+export {
+  QuestionMultiSelect,
+  type QuestionMultiSelectConfig,
+  QuestionOpen,
+  type QuestionOpenConfig,
+  QuestionSelect,
+  type QuestionSelectConfig,
+};
