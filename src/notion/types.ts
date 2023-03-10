@@ -6,7 +6,8 @@ export type PropertyType =
   | "url"
   | "select"
   | "multi_select"
-  | "date";
+  | "date"
+  | "status";
 
 // TODO: improve type such that only one property of type "title" is allowed
 export type PropertiesSchema = Record<string, PropertyType>;
@@ -62,6 +63,16 @@ export type DatePropertyValue = {
   };
 };
 
+export type StatusPropertyValue = {
+  id: string;
+  type: "status";
+  status: {
+    id: string;
+    color: OptionColor;
+    name: string;
+  };
+};
+
 export type Option = {
   id: string;
   name: string;
@@ -78,6 +89,7 @@ export type PropertyValue<T extends PropertyType> =
   : T extends "select" ? SelectPropertyValue
   : T extends "multi_select" ? MultiSelectPropertyValue
   : T extends "date" ? DatePropertyValue
+  : T extends "status" ? StatusPropertyValue
   : never;
 
 type _RichText = {
@@ -214,6 +226,8 @@ export type SelectFilterCondition = StrictUnion<
   )
 >;
 
+export type StatusFilterCondition = SelectFilterCondition;
+
 export type MultiSelectFilterCondition = StrictUnion<
   (
     | { contains: string }
@@ -241,6 +255,7 @@ export type PropertyFilter<S extends PropertiesSchema> = {
         : S[K] extends "checkbox" ? { checkbox: CheckboxFilterCondition }
         : S[K] extends "select" ? { select: SelectFilterCondition }
         : S[K] extends "multi_select" ? { multi_select: MultiSelectFilterCondition }
+        : S[K] extends "status" ? { status: StatusFilterCondition }
         : never
     );
 }[keyof S];
