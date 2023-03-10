@@ -22,7 +22,7 @@ type NotionMembersDbSchema = typeof notionMembersDbSchema;
 
 const notionCandidatesDbSchema = {
   "Name": "title",
-  "Status": "select",
+  "Status": "status",
   "Common QA": "rich_text",
   "Departments": "multi_select",
   "Departments QA": "rich_text",
@@ -140,8 +140,8 @@ export class O12t<C extends Context> {
           ],
         },
         "Status": {
-          select: {
-            name: "New",
+          status: {
+            name: "Not started",
           },
         },
         "Telegram ID": {
