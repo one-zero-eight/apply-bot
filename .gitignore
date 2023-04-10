@@ -1,12 +1,12 @@
-# dotenv configuration file
-.env
-
 # IDE configs
 .vscode/
 .idea/
 
-# system files
+# System files
 .DS_Store
 
-# data
-/redis_data
+# dotenv configuration file
+.env
+
+# Redis data
+/redis_data/
