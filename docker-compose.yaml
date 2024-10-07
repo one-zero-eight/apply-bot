@@ -1,0 +1,19 @@
+services:
+  bot:
+    build: .
+    restart: always
+    depends_on:
+      - redis
+    env_file:
+      - .env
+
+  redis:
+    # See more: https://hub.docker.com/_/redis
+    image: "redis:7.0.9-alpine"
+    restart: always
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    volumes:
+      - "./redis_data:/data"
+      - "./redis/redis.conf:/usr/local/etc/redis/redis.conf"
+    ports:
+      - "6379:6379"
