@@ -6,6 +6,7 @@ import { msFrom } from "@/utils/dates.ts";
 import { DepartmentId, departmentsIds, departmentsInfo } from "@/departments.ts";
 import { CandidateApplication } from "@/handlers/conversations/application.ts";
 import { RichText, RichTextText } from "@/notion/types.ts";
+import { bot } from "../bot.ts";
 
 const notionMembersDbSchema = {
   "Active": "checkbox",
@@ -58,9 +59,9 @@ export interface Candidate {
 }
 
 export type O12tOptions = {
-  notionApiToken: string;
-  membersDatabaseId: string;
-  candidatesDatabaseId: string;
+  notionApiToken?: string;
+  membersDatabaseId?: string;
+  candidatesDatabaseId?: string;
 };
 
 export interface O12tFlavor {
@@ -81,7 +82,7 @@ export class O12t<C extends Context> {
   private MEMBERS_DB_REFRESH_RATE_MS = 5000;
   private CANDIDATES_DB_REFRESH_RATE_MS = 30000;
 
-  private notion: Notion;
+  private notion: Notion | null;
   private membersDatabaseId: string;
   private candidatesDatabaseId: string;
   private membersLastRefreshedAt: Date | null;
@@ -94,9 +95,16 @@ export class O12t<C extends Context> {
   constructor(
     { notionApiToken, membersDatabaseId, candidatesDatabaseId }: O12tOptions,
   ) {
-    this.notion = new Notion({ integrationApiToken: notionApiToken });
-    this.membersDatabaseId = membersDatabaseId;
-    this.candidatesDatabaseId = candidatesDatabaseId;
+    if (notionApiToken && membersDatabaseId && candidatesDatabaseId) {
+      this.notion = new Notion({ integrationApiToken: notionApiToken });
+      this.membersDatabaseId = membersDatabaseId;
+      this.candidatesDatabaseId = candidatesDatabaseId;
+    } else {
+      console.log("Notion integration is disabled")
+      this.notion = null;
+      this.membersDatabaseId = "";
+      this.candidatesDatabaseId = "";
+    }
     this.membersLastRefreshedAt = null;
     this.cachedMembers = {};
     this.candidatesLastRefreshedAt = null;
@@ -123,11 +131,30 @@ export class O12t<C extends Context> {
         `Candidate with Telegram ID ${application.telegramId} already exists.`,
       );
     }
+
+    // Send application to the applications chat
+    const formattedApplication = `
+<b>New candidate application</b>
+Name: <i>${application.name}</i>
+Telegram: @${application.telegramUsername} (ID: ${application.telegramId})
+Departments: <i>${application.selectedDepartments.map((d) => departmentsInfo[d].displayName).join(", ")}</i>
+
+<b>Common QA:</b>
+${application.generalQa.map(([q, a]) => `${q}\n${a}`).join("\n\n")}
+
+<b>Departments QA:</b>
+${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
+`;
+    // Split the message into chunks of 4000 characters
+    for (let i = 0; i < formattedApplication.length / 4000; i++) {
+      await bot.api.sendMessage(config.APPLICATIONS_CHAT_TELEGRAM_ID, formattedApplication.slice(i * 4000, (i + 1) * 4000));
+    }
+
     const departmentsQaFormatted = formatCandidateApplicationDepartmentsQa(
       application.departmentsQa,
     );
 
-    await this.notion.createPage({
+    await this.notion?.createPage({
       databaseId: this.candidatesDatabaseId,
       properties: {
         "Name": {
@@ -201,12 +228,16 @@ export class O12t<C extends Context> {
       return Promise.resolve(this.cachedMembers);
     }
 
+    if (!this.notion) {
+      return Promise.resolve({});
+    }
+
     if (!this.membersFetchingPromise) {
       this.membersFetchingPromise = (async () => {
         try {
-          const members = await this.notion.queryDb<NotionMembersDbSchema>({
+          const members = await this.notion?.queryDb<NotionMembersDbSchema>({
             databaseId: this.membersDatabaseId,
-          });
+          }) ?? [];
 
           const actualMembers: Record<number, Member> = {};
 
@@ -254,14 +285,18 @@ export class O12t<C extends Context> {
       return Promise.resolve(this.cachedCandidates);
     }
 
+    if (!this.notion) {
+      return Promise.resolve({});
+    }
+
     if (!this.candidatesFetchingPromise) {
       this.candidatesFetchingPromise = (async () => {
         try {
-          const candidates = await this.notion.queryDb<
+          const candidates = await this.notion?.queryDb<
             NotionCandidatesDbSchema
           >({
             databaseId: this.candidatesDatabaseId,
-          });
+          }) ?? [];
 
           const actualCandidates: Record<number, Candidate> = {};
 

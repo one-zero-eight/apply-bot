@@ -2,9 +2,10 @@ import { load } from "dotenv";
 
 export interface BotConfig {
   TELEGRAM_BOT_TOKEN: string;
-  NOTION_INTEGRATION_TOKEN: string;
-  NOTION_MEMBERS_DB_ID: string;
-  NOTION_CANDIDATES_DB_ID: string;
+  APPLICATIONS_CHAT_TELEGRAM_ID: number;
+  NOTION_INTEGRATION_TOKEN?: string;
+  NOTION_MEMBERS_DB_ID?: string;
+  NOTION_CANDIDATES_DB_ID?: string;
   REDIS_HOSTNAME: string;
   REDIS_PORT: string;
   WEBHOOK_SECRET_PATH?: string;
@@ -16,15 +17,16 @@ async function loadConfig(): Promise<BotConfig> {
 
   const required = [
     "TELEGRAM_BOT_TOKEN",
-    "NOTION_INTEGRATION_TOKEN",
-    "NOTION_MEMBERS_DB_ID",
-    "NOTION_CANDIDATES_DB_ID",
+    "APPLICATIONS_CHAT_TELEGRAM_ID",
     "REDIS_HOSTNAME",
     "REDIS_PORT",
   ] as const;
 
   const optional = [
     "WEBHOOK_SECRET_PATH",
+    "NOTION_INTEGRATION_TOKEN",
+    "NOTION_MEMBERS_DB_ID",
+    "NOTION_CANDIDATES_DB_ID",
   ] as const;
 
   for (const key of required) {
