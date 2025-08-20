@@ -7,6 +7,7 @@ import { DepartmentId, departmentsIds, departmentsInfo } from "@/departments.ts"
 import { CandidateApplication } from "@/handlers/conversations/application.ts";
 import { RichText, RichTextText } from "@/notion/types.ts";
 import { bot } from "../bot.ts";
+import { escapeHtml } from "../utils/html.ts";
 
 const notionMembersDbSchema = {
   "Active": "checkbox",
@@ -135,12 +136,12 @@ export class O12t<C extends Context> {
     // Send application to the applications chat
     const formattedApplication = `
 <b>New candidate application</b>
-Name: <i>${application.name}</i>
+Name: <i>${escapeHtml(application.name)}</i>
 Telegram: @${application.telegramUsername} (ID: ${application.telegramId})
 Departments: <i>${application.selectedDepartments.map((d) => departmentsInfo[d].displayName).join(", ")}</i>
 
 <b>Common QA:</b>
-${application.generalQa.map(([q, a]) => `${q}\n${a}`).join("\n\n")}
+${application.generalQa.map(([q, a]) => `${escapeHtml(q)}\n${escapeHtml(a)}`).join("\n\n")}
 
 <b>Departments QA:</b>
 ${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
@@ -427,7 +428,7 @@ function stringifyCandidateApplicationDepartmentsQa(
     for (let i = 0; i < depQa.length; i++) {
       const [question, answer] = depQa[i];
       rows.push(`${depName} Q${i + 1} — ${question}`);
-      rows.push(answer + "\n");
+      rows.push(escapeHtml(answer) + "\n");
     }
   }
   return rows.join("\n");
