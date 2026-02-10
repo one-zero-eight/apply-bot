@@ -1,5 +1,5 @@
 # https://github.com/denoland/deno_docker
-FROM denoland/deno:2.4.4
+FROM denoland/deno:2.6.8
 
 WORKDIR /app
 USER deno
