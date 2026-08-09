@@ -22,7 +22,7 @@ jobs:
         uses: denoland/setup-deno@v1
         id: deno_setup
         with:
-          deno-version: v1.x
+          deno-version: v2.4.4
 
       - name: Format
         if: success() || (failure() && steps.deno_setup.conclusion == 'success')
