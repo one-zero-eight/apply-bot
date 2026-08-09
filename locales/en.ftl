@@ -118,16 +118,19 @@ cnv_candidate-application =
   .cannot-use-command = <i>/pause the conversation to use commands</i>
   .btn_begin-go = Let's go!
   .btn_begin-cancel = Not now.
-  .q-name = What is your full name? (in English)
-  .q-skills = Tell us more about your skills.
-  .q-motivation = Why do you want to join our team? What is your motivation?
-  .q-time-to-spend = How much time you may spend on one-zero-eight (including meetings, discussions, etc.)?
+  .q-name = Your name and surname in English.
+  .q-skills = How old are you? What year of study are you in? University or college?
+  .q-motivation = What is your motivation for joining one-zero-eight team? Do you already know what you would like to work on?
+  .q-time-to-spend = How much time are you ready to dedicate to the team?
   .hours-per-week-1-5 = 1-5 hours per week
   .hours-per-week-5-10 = 5-10 hours per week
   .hours-per-week-10-plus = 10+ hours per week
-  .q-deadlines = How would you describe your ability to work with deadlines?
-  .q-portfolio = Attach your portfolio (paste links in one message).
-  .q-learnt-from = How did you know about one-zero-eight?
+  .q-deadlines = Describe which one-zero-eight projects and activities you are familiar with. Which of our projects do you use?
+  .q-portfolio = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
+  .q-learnt-from = How did you hear about one-zero-eight?
+  .q-age-study = How old are you? What year of study are you in? University or college?
+  .q-projects = Describe which one-zero-eight projects and activities you are familiar with. Which of our projects do you use?
+  .q-github-resume-social = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
   .q-select-departments =
     We have four departments at <i>one-zero-eight</i>:
 
@@ -175,26 +178,26 @@ cnv_candidate-application =
 
 departments-qa = Departments Q&amp;A
 
-q-tech-1 = What programming experience do you have? Describe the directions you work in (e.g. backend, frontend, hardware), programming languages you know, and technologies you work with.
-q-tech-2 = Describe your experience of working in a team. Maybe you've contributed in some open-source projects?
-q-tech-3 = Describe your own software/hardware solution to a problem that you are proud of.
-q-tech-4 = Send me a link to your GitHub profile. Or any other text, if you don't have one 🤔
+q-tech-1 = Describe the areas in which you have experience (backend, frontend, DevOps), the programming languages you know, and the technologies you have worked with.
+q-tech-2 = Describe software/hardware solutions you are proud of.
+q-tech-3 = Do you have experience working in a team? Are you able to meet deadlines?
+q-tech-4 = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
 
-q-design-1 = Which directions do you want to work more?
+q-design-1 = What areas have you worked in? (e.g. illustrations, digital design, web design, or 3D modeling)
   .ux-ui = UX/UI
   .web = Web design
   .art = Art
   .vector = Vector graphics
   .smm = SMM design
   .photo = Photo editing
-q-design-2 = Which programs do you use for designing (e.g. Illustrator, Figma, etc.)?
-q-design-3 = Describe your most successful work (you can also attach link to this work). 
+q-design-2 = What experience do you have in design? (e.g. posters, websites, or merch) If you do not have experience, tell us what you are interested in.
+q-design-3 = Which design tools have you used? (e.g. Figma, Illustrator)
+q-design-4 = Share links to your work.
 
-q-management-1 = What management programs (applications) do you use?
-q-management-2 = What management experience do you have?
-q-management-3 = How much do you rate your communication skills?
-q-management-4 = Describe your soft and hard skills.
-q-management-5 = What is successful management for you? Give an example of a successful company from the point of view of management and justify the choice.
+q-management-1 = Have you worked in IT teams? In which roles, and what were you responsible for? (e.g. analytics, frontend, backend, or product management)
+q-management-2 = Are you familiar with GitHub and issue management?
+q-management-3 = Do you have presentation skills? Have you created presentations yourself?
+q-management-4 = Have you worked with text? Are you interested in writing posts?
 
 question-keep-saved = Or /keep the saved answer:
   <i>{ $saved }</i>
