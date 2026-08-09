@@ -23,20 +23,16 @@
     "redis": "https://deno.land/x/redis@v0.29.2/mod.ts"
   },
   "fmt": {
-    "files": {
-      "include": [
-        "src/",
-        "test/",
-        "deno.json"
-      ]
-    },
-    "options": {
-      "useTabs": false,
-      "indentWidth": 2,
-      "lineWidth": 88,
-      "semiColons": true,
-      "singleQuote": false
-    }
+    "include": [
+      "src/",
+      "test/",
+      "deno.json"
+    ],
+    "useTabs": false,
+    "indentWidth": 2,
+    "lineWidth": 88,
+    "semiColons": true,
+    "singleQuote": false
   },
   "compilerOptions": {
     "lib": [
