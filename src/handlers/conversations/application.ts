@@ -36,8 +36,7 @@ const flowQuestions = {
   selectDepartments: new QuestionMultiSelect({
     msgId: msg("q-select-departments"),
     optionsKeyboard: [
-      ["tech", "design"],
-      ["media", "management"],
+      ["tech", "design", "management"],
     ] as DepartmentId[][],
     getOptionLabel: (opt) => departmentsInfo[opt].displayName,
     min: 1,
@@ -109,11 +108,6 @@ const departmentsQuestions: Record<DepartmentId, Question[]> = {
     }),
     new QuestionOpen({ msgId: "q-design-2", maxSize: 300 }),
     new QuestionOpen({ msgId: "q-design-3" }),
-  ],
-  media: [
-    new QuestionOpen({ msgId: "q-media-1", maxSize: 300 }),
-    new QuestionOpen({ msgId: "q-media-2" }),
-    new QuestionOpen({ msgId: "q-media-3" }),
   ],
   management: [
     new QuestionOpen({ msgId: "q-management-1" }),

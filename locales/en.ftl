@@ -28,7 +28,7 @@ want-to-108-yes =
       
   <b><i>one-zero-eight</i></b> — is a community of enthusiastic individuals with a common mission — make life at Innopolis University better. We aim to improve our skills and networking, create projects, and just enjoy the process.
 
-  There are four departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b>, <b>Media</b>, and <b>Management</b>. You can read more about us in <a href="https://t.me/one_zero_eight/10">our presentation</a>.
+  There are four departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b> and <b>Management</b>. You can read more about us in <a href="https://t.me/one_zero_eight/10">our presentation</a>.
 
   We welcome everyone, who has something valuable to contribute and who is ready to grow with us. Is it about you? Then we're waiting for you! Click the button (or send me /apply), when you're ready to answer some questions and join us.
 
@@ -86,7 +86,6 @@ fallback-callback-query-msg-3 = too late... ⏱️
 
 -department-description-tech = <b><u>Tech</u></b> department develops software and hardware projects, creates websites and bots. We welcome people interested in great projects and elegant software solutions!
 -department-description-design = <b><u>Design</u></b> department takes care of all design stuff from tech projects to media posts and banners, draws beautiful arts, develops convenient UI's, and edits photos. We welcome everyone who love aesthetics!
--department-description-media = <b><u>Media</u></b> department covers and hosts events, records interviews. If you are a good speaker, photographer or anyone else connected with media — join us to develop your skills!
 -department-description-management = <b><u>Management</u></b> department connects other departments, communicates with influential people outside the team, and manages events. If you like to create tables in “to-do” apps, you are welcome!
 
 cnv_candidate-application =
@@ -135,8 +134,6 @@ cnv_candidate-application =
     { -department-description-tech }
 
     { -department-description-design }
-
-    { -department-description-media }
 
     { -department-description-management }
 
@@ -192,10 +189,6 @@ q-design-1 = Which directions do you want to work more?
   .photo = Photo editing
 q-design-2 = Which programs do you use for designing (e.g. Illustrator, Figma, etc.)?
 q-design-3 = Describe your most successful work (you can also attach link to this work). 
-
-q-media-1 = Describe your communication skills.
-q-media-2 = What tools and technologies do you use in media projects (mostly content creation)?
-q-media-3 = How do you follow news and trends in the media industry?
 
 q-management-1 = What management programs (applications) do you use?
 q-management-2 = What management experience do you have?

@@ -37,7 +37,6 @@ type NotionCandidatesDbSchema = typeof notionCandidatesDbSchema;
 const departmentIdSelectNameMap: Record<DepartmentId, string> = {
   tech: "Tech",
   design: "Design",
-  media: "Media",
   management: "Management",
 };
 
@@ -317,7 +316,6 @@ ${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
             const departments: Record<DepartmentId, boolean> = {
               tech: false,
               design: false,
-              media: false,
               management: false,
             };
             for (const departmentId of departmentIds) {
