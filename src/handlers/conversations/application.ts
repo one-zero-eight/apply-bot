@@ -95,7 +95,6 @@ const departmentsQuestions: Record<DepartmentId, Question[]> = {
     new QuestionOpen({ msgId: "q-tech-1" }),
     new QuestionOpen({ msgId: "q-tech-2" }),
     new QuestionOpen({ msgId: "q-tech-3" }),
-    new QuestionOpen({ msgId: "q-tech-4", maxSize: 100 }),
   ],
   design: [
     new QuestionMultiSelect({
@@ -108,13 +107,13 @@ const departmentsQuestions: Record<DepartmentId, Question[]> = {
     }),
     new QuestionOpen({ msgId: "q-design-2", maxSize: 300 }),
     new QuestionOpen({ msgId: "q-design-3" }),
+    new QuestionOpen({ msgId: "q-design-4" }),
   ],
   management: [
     new QuestionOpen({ msgId: "q-management-1" }),
     new QuestionOpen({ msgId: "q-management-2" }),
     new QuestionOpen({ msgId: "q-management-3" }),
     new QuestionOpen({ msgId: "q-management-4" }),
-    new QuestionOpen({ msgId: "q-management-5" }),
   ],
 };
 
