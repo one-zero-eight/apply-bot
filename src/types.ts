@@ -6,8 +6,11 @@ import type {
   SessionData as CandidateApplicationSessionData,
 } from "@/handlers/conversations/application.ts";
 
+export type LocaleId = "en" | "ru";
+
 export interface SessionData {
   candidateCnv: CandidateApplicationSessionData;
+  language?: LocaleId;
 }
 
 export type Ctx =

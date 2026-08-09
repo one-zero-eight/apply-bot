@@ -69,6 +69,9 @@ yes = Yes
 no = No
 i-want-to-108 = 🙋 I want to one-zero-eight!
 wait-a-second = Just a second.
+choose-language = Choose your language:
+language-ru = Русский 🇷🇺
+language-en = English 🇬🇧
 
 fallback-callback-query-msg-1 = Button's stuck!
 fallback-callback-query-msg-2 = Ship's sailed.

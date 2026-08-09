@@ -1,6 +1,16 @@
 import { InlineKeyboard } from "grammy";
 import { Menu } from "grammy-menu";
-import type { Ctx } from "@/types.ts";
+import type { Ctx, LocaleId } from "@/types.ts";
+
+export const languageMenu = new Menu<Ctx>("language-menu")
+  .text(
+    (ctx) => ctx.t("language-ru"),
+    (ctx) => selectLanguage(ctx, "ru"),
+  )
+  .text(
+    (ctx) => ctx.t("language-en"),
+    (ctx) => selectLanguage(ctx, "en"),
+  );
 
 export const startMenu = new Menu<Ctx>("start-menu")
   .text(
@@ -25,6 +35,17 @@ export const startMenu = new Menu<Ctx>("start-menu")
   );
 
 export async function startCmd(ctx: Ctx) {
+  await ctx.reply(ctx.t("choose-language"), { reply_markup: languageMenu });
+}
+
+async function selectLanguage(ctx: Ctx, locale: LocaleId) {
+  ctx.session.language = locale;
+  ctx.i18n.useLocale(locale);
+  await ctx.editMessageReplyMarkup({ reply_markup: undefined });
+  await showStartContent(ctx);
+}
+
+async function showStartContent(ctx: Ctx) {
   const member = await ctx.o12t.member();
   if (member != null) {
     await ctx.reply(ctx.t(
