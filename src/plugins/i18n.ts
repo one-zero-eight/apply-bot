@@ -14,9 +14,7 @@ export const i18n = new I18n<Ctx>({
       return await Promise.resolve(savedLocale);
     }
 
-    return await Promise.resolve(
-      ctx.from?.language_code?.toLowerCase().startsWith("ru") ? "ru" : "en",
-    );
+    return await Promise.resolve("en");
   },
 });
 await i18n.loadLocalesDir(`${__dirname}/../../locales`);
