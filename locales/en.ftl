@@ -183,12 +183,6 @@ q-tech-2 = Describe software/hardware solutions you are proud of.
 q-tech-3 = Do you have experience working in a team? Are you able to meet deadlines?
 
 q-design-1 = What areas have you worked in? (e.g. illustrations, digital design, web design, or 3D modeling)
-  .ux-ui = UX/UI
-  .web = Web design
-  .art = Art
-  .vector = Vector graphics
-  .smm = SMM design
-  .photo = Photo editing
 q-design-2 = What experience do you have in design? (e.g. posters, websites, or merch) If you do not have experience, tell us what you are interested in.
 q-design-3 = Which design tools have you used? (e.g. Figma, Illustrator)
 q-design-4 = Share links to your work.
