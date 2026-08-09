@@ -28,7 +28,7 @@ want-to-108-yes =
       
   <b><i>one-zero-eight</i></b> — is a community of enthusiastic individuals with a common mission — make life at Innopolis University better. We aim to improve our skills and networking, create projects, and just enjoy the process.
 
-  There are three departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b> and <b>Management</b>. You can read more about us in <a href="https://t.me/one_zero_eight/10">our presentation</a>.
+  There are three departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b> and <b>Management</b>. You can read more about us on our <a href="https://innohassle.ru/about">Innohassle page</a>.
 
   We welcome everyone, who has something valuable to contribute and who is ready to grow with us. Is it about you? Then we're waiting for you! Click the button (or send me /apply), when you're ready to answer some questions and join us.
 
@@ -130,7 +130,7 @@ cnv_candidate-application =
   .hours-per-week-1-5 = 1-5 hours per week
   .hours-per-week-5-10 = 5-10 hours per week
   .hours-per-week-10-plus = 10+ hours per week
-  .q-github-resume-social = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
+  .q-github-resume-social = Send a link to your GitHub, your resume, if you have one, and to any of your social media profiles that may be relevant to us.
   .q-select-departments =
     We have three departments at <i>one-zero-eight</i>:
 
