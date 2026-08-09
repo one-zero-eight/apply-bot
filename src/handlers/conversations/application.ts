@@ -72,9 +72,9 @@ const flowQuestions = {
 };
 
 const beforeDepartmentsQuestions: Question[] = [
-  new QuestionOpen({ msgId: msg("q-skills") }),
-];
-const afterDepartmentsQuestions: Question[] = [
+  new QuestionOpen({ msgId: msg("q-age-study") }),
+  new QuestionOpen({ msgId: msg("q-learnt-from"), maxSize: 300 }),
+  new QuestionOpen({ msgId: msg("q-projects"), maxSize: 500 }),
   new QuestionOpen({ msgId: msg("q-motivation") }),
   new QuestionSelect({
     msgId: msg("q-time-to-spend"),
@@ -85,9 +85,9 @@ const afterDepartmentsQuestions: Question[] = [
     ],
     getOptionLabel: (opt, ctx) => ctx.t(msg(opt)),
   }),
-  new QuestionOpen({ msgId: msg("q-deadlines"), maxSize: 500 }),
-  new QuestionOpen({ msgId: msg("q-portfolio"), maxSize: 500 }),
-  new QuestionOpen({ msgId: msg("q-learnt-from"), maxSize: 300 }),
+];
+const afterDepartmentsQuestions: Question[] = [
+  new QuestionOpen({ msgId: msg("q-github-resume-social"), maxSize: 500 }),
 ];
 
 const departmentsQuestions: Record<DepartmentId, Question[]> = {

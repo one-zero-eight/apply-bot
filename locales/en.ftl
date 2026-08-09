@@ -28,7 +28,7 @@ want-to-108-yes =
       
   <b><i>one-zero-eight</i></b> — is a community of enthusiastic individuals with a common mission — make life at Innopolis University better. We aim to improve our skills and networking, create projects, and just enjoy the process.
 
-  There are four departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b> and <b>Management</b>. You can read more about us in <a href="https://t.me/one_zero_eight/10">our presentation</a>.
+  There are three departments in <i>one-zero-eight</i>: <b>Tech</b>, <b>Design</b> and <b>Management</b>. You can read more about us in <a href="https://t.me/one_zero_eight/10">our presentation</a>.
 
   We welcome everyone, who has something valuable to contribute and who is ready to grow with us. Is it about you? Then we're waiting for you! Click the button (or send me /apply), when you're ready to answer some questions and join us.
 
@@ -119,20 +119,17 @@ cnv_candidate-application =
   .btn_begin-go = Let's go!
   .btn_begin-cancel = Not now.
   .q-name = Your name and surname in English.
-  .q-skills = How old are you? What year of study are you in? University or college?
+  .q-age-study = How old are you? What year of study are you in? University or college?
+  .q-learnt-from = How did you hear about one-zero-eight?
+  .q-projects = Describe which one-zero-eight projects and activities you are familiar with. Which of our projects do you use?
   .q-motivation = What is your motivation for joining one-zero-eight team? Do you already know what you would like to work on?
   .q-time-to-spend = How much time are you ready to dedicate to the team?
   .hours-per-week-1-5 = 1-5 hours per week
   .hours-per-week-5-10 = 5-10 hours per week
   .hours-per-week-10-plus = 10+ hours per week
-  .q-deadlines = Describe which one-zero-eight projects and activities you are familiar with. Which of our projects do you use?
-  .q-portfolio = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
-  .q-learnt-from = How did you hear about one-zero-eight?
-  .q-age-study = How old are you? What year of study are you in? University or college?
-  .q-projects = Describe which one-zero-eight projects and activities you are familiar with. Which of our projects do you use?
   .q-github-resume-social = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
   .q-select-departments =
-    We have four departments at <i>one-zero-eight</i>:
+    We have three departments at <i>one-zero-eight</i>:
 
     { -department-description-tech }
 
@@ -181,7 +178,6 @@ departments-qa = Departments Q&amp;A
 q-tech-1 = Describe the areas in which you have experience (backend, frontend, DevOps), the programming languages you know, and the technologies you have worked with.
 q-tech-2 = Describe software/hardware solutions you are proud of.
 q-tech-3 = Do you have experience working in a team? Are you able to meet deadlines?
-q-tech-4 = Send a link to your GitHub. Also attach your resume, if you have one, and links to any of your social media profiles that may be relevant to us.
 
 q-design-1 = What areas have you worked in? (e.g. illustrations, digital design, web design, or 3D modeling)
   .ux-ui = UX/UI
