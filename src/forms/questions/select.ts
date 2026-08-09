@@ -66,7 +66,7 @@ export class QuestionSelect<
       }),
       {
         reply_markup: this.buildKeyboard(localKeyboardId, ctx),
-        disable_web_page_preview: true,
+        link_preview_options: { is_disabled: true },
       },
     );
 

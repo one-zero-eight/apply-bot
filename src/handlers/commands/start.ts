@@ -11,7 +11,7 @@ export const startMenu = new Menu<Ctx>("start-menu")
         ctx.t("want-to-108-yes"),
         {
           reply_markup: new InlineKeyboard().text(ctx.t("i-want-to-108"), "apply"),
-          disable_web_page_preview: true,
+          link_preview_options: { is_disabled: true },
         },
       );
     },
@@ -37,7 +37,7 @@ export async function startCmd(ctx: Ctx) {
   if (candidate != null) {
     await ctx.reply(
       ctx.t("cmd_start-candidate", { name: candidate.name }),
-      { disable_web_page_preview: true },
+      { link_preview_options: { is_disabled: true } },
     );
     return;
   }

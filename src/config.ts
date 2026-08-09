@@ -34,7 +34,11 @@ async function loadConfig(): Promise<BotConfig> {
     if (!val) {
       throw new Error(`${key} environment variable is not set`);
     }
-    cfg[key] = val;
+    if (key === "APPLICATIONS_CHAT_TELEGRAM_ID") {
+      cfg[key] = Number(val);
+    } else {
+      cfg[key] = val;
+    }
   }
 
   for (const key of optional) {

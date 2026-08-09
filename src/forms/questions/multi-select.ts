@@ -78,7 +78,7 @@ export class QuestionMultiSelect<O extends string = string> extends QuestionBase
       }),
       {
         reply_markup: this.buildKeyboard(localKeyboardId, ctx, selected),
-        disable_web_page_preview: true,
+        link_preview_options: { is_disabled: true },
       },
     );
 
