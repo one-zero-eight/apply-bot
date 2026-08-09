@@ -69,22 +69,6 @@ docker --version
 docker compose version
 ```
 
-### Installing Deno manually
-
-Linux/macOS:
-
-```bash
-curl -fsSL https://deno.land/install.sh | sh
-```
-
-Windows PowerShell:
-
-```powershell
-irm https://deno.land/install.ps1 | iex
-```
-
-Restart your terminal after installation and check `deno --version`.
-
 ## Local development
 
 ### 1. Clone the repository
@@ -96,7 +80,7 @@ cd apply-bot
 
 ### 2. Install dependencies
 
-The project does not use `npm install`: Deno downloads dependencies from the import map and caches them locally.
+Deno downloads dependencies from the import map and caches them locally.
 
 ```bash
 deno cache --allow-import src/run-lp.ts
@@ -140,19 +124,6 @@ In this mode, both the bot and Redis run inside the Compose network. Make sure `
 docker compose up --build -d
 ```
 
-Check the container status:
-
-```bash
-docker compose ps
-docker compose logs -f bot
-```
-
-Stop the containers:
-
-```bash
-docker compose down
-```
-
 ### 5. Run the bot manually
 
 Start Redis only:
@@ -162,10 +133,8 @@ docker compose up -d redis
 docker compose exec redis redis-cli ping
 ```
 
-Expected output:
-
 ```text
-PONG
+PONG # expected output
 ```
 
 For a manual bot launch, set the following values in `.env`:
@@ -201,22 +170,7 @@ docker compose exec redis redis-cli FLUSHALL
 
 This deletes all Redis sessions, including applications, selected languages, and conversation state.
 
-### Recreate the Redis storage completely
-
-Stopping Compose does not delete the data because Redis uses the `./redis_data:/data` bind mount.
-
-```bash
-docker compose down
-rm -rf ./redis_data
-docker compose up -d redis
-```
-
-> In PowerShell, use `Remove-Item -Recurse -Force .\redis_data` instead of `rm -rf`.
-> Removing `redis_data` permanently deletes the local Redis data.
-
 ## Quality checks
-
-Run the main project checks with:
 
 ```bash
 deno fmt --check
@@ -264,15 +218,6 @@ Without Notion, the bot continues to work and sends applications to the Telegram
 ## License
 
 This project is distributed under the [MIT License](./LICENSE).
-
-## Useful links
-
-- [one-zero-eight on Telegram](https://t.me/one_zero_eight)
-- [one-zero-eight presentation](https://t.me/one_zero_eight/10)
-- [Deno documentation](https://docs.deno.com/runtime/)
-- [Docker documentation](https://docs.docker.com/)
-- [Redis documentation](https://redis.io/docs/)
-- [grammY documentation](https://grammy.dev/)
 
 [Deno]: https://img.shields.io/badge/Deno-2.4.4-41BDF5?logo=deno&logoColor=white
 [Deno-url]: https://deno.com/
