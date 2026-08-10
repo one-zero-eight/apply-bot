@@ -104,7 +104,10 @@ export class QuestionOpen<
         message: ctx.t(this.msgId, this.getMessageOptions?.(cnv, ctx)),
         footer,
       }),
-      { reply_markup: { remove_keyboard: true }, disable_web_page_preview: true },
+      {
+        reply_markup: { remove_keyboard: true },
+        link_preview_options: { is_disabled: true },
+      },
     );
   }
 }

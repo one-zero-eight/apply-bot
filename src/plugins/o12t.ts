@@ -37,7 +37,6 @@ type NotionCandidatesDbSchema = typeof notionCandidatesDbSchema;
 const departmentIdSelectNameMap: Record<DepartmentId, string> = {
   tech: "Tech",
   design: "Design",
-  media: "Media",
   management: "Management",
 };
 
@@ -101,7 +100,7 @@ export class O12t<C extends Context> {
       this.membersDatabaseId = membersDatabaseId;
       this.candidatesDatabaseId = candidatesDatabaseId;
     } else {
-      console.log("Notion integration is disabled")
+      console.log("Notion integration is disabled");
       this.notion = null;
       this.membersDatabaseId = "";
       this.candidatesDatabaseId = "";
@@ -138,17 +137,28 @@ export class O12t<C extends Context> {
 <b>New candidate application</b>
 Name: <i>${escapeHtml(application.name)}</i>
 Telegram: @${application.telegramUsername} (ID: ${application.telegramId})
-Departments: <i>${application.selectedDepartments.map((d) => departmentsInfo[d].displayName).join(", ")}</i>
+Departments: <i>${
+      application.selectedDepartments.map((d) => departmentsInfo[d].displayName).join(
+        ", ",
+      )
+    }</i>
 
 <b>Common QA:</b>
-${application.generalQa.map(([q, a]) => `${escapeHtml(q)}\n${escapeHtml(a)}`).join("\n\n")}
+${
+      application.generalQa.map(([q, a]) => `${escapeHtml(q)}\n${escapeHtml(a)}`).join(
+        "\n\n",
+      )
+    }
 
 <b>Departments QA:</b>
 ${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
 `;
     // Split the message into chunks of 4000 characters
     for (let i = 0; i < formattedApplication.length / 4000; i++) {
-      await bot.api.sendMessage(config.APPLICATIONS_CHAT_TELEGRAM_ID, formattedApplication.slice(i * 4000, (i + 1) * 4000));
+      await bot.api.sendMessage(
+        config.APPLICATIONS_CHAT_TELEGRAM_ID,
+        formattedApplication.slice(i * 4000, (i + 1) * 4000),
+      );
     }
 
     const departmentsQaFormatted = formatCandidateApplicationDepartmentsQa(
@@ -317,7 +327,6 @@ ${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
             const departments: Record<DepartmentId, boolean> = {
               tech: false,
               design: false,
-              media: false,
               management: false,
             };
             for (const departmentId of departmentIds) {

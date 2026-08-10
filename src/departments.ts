@@ -1,4 +1,4 @@
-export const departmentsIds = ["tech", "design", "media", "management"] as const;
+export const departmentsIds = ["tech", "design", "management"] as const;
 export const departmentsInfo: { [I in DepartmentId]: DepartmentInfo<I> } = {
   tech: {
     id: "tech",
@@ -8,11 +8,6 @@ export const departmentsInfo: { [I in DepartmentId]: DepartmentInfo<I> } = {
   design: {
     id: "design",
     displayName: "Design",
-  },
-
-  media: {
-    id: "media",
-    displayName: "Media",
   },
 
   management: {

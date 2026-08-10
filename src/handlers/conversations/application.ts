@@ -36,8 +36,7 @@ const flowQuestions = {
   selectDepartments: new QuestionMultiSelect({
     msgId: msg("q-select-departments"),
     optionsKeyboard: [
-      ["tech", "design"],
-      ["media", "management"],
+      ["tech", "design", "management"],
     ] as DepartmentId[][],
     getOptionLabel: (opt) => departmentsInfo[opt].displayName,
     min: 1,
@@ -73,9 +72,9 @@ const flowQuestions = {
 };
 
 const beforeDepartmentsQuestions: Question[] = [
-  new QuestionOpen({ msgId: msg("q-skills") }),
-];
-const afterDepartmentsQuestions: Question[] = [
+  new QuestionOpen({ msgId: msg("q-age-study") }),
+  new QuestionOpen({ msgId: msg("q-learnt-from"), maxSize: 300 }),
+  new QuestionOpen({ msgId: msg("q-projects"), maxSize: 500 }),
   new QuestionOpen({ msgId: msg("q-motivation") }),
   new QuestionSelect({
     msgId: msg("q-time-to-spend"),
@@ -86,9 +85,9 @@ const afterDepartmentsQuestions: Question[] = [
     ],
     getOptionLabel: (opt, ctx) => ctx.t(msg(opt)),
   }),
-  new QuestionOpen({ msgId: msg("q-deadlines"), maxSize: 500 }),
-  new QuestionOpen({ msgId: msg("q-portfolio"), maxSize: 500 }),
-  new QuestionOpen({ msgId: msg("q-learnt-from"), maxSize: 300 }),
+];
+const afterDepartmentsQuestions: Question[] = [
+  new QuestionOpen({ msgId: msg("q-github-resume-social"), maxSize: 500 }),
 ];
 
 const departmentsQuestions: Record<DepartmentId, Question[]> = {
@@ -96,31 +95,18 @@ const departmentsQuestions: Record<DepartmentId, Question[]> = {
     new QuestionOpen({ msgId: "q-tech-1" }),
     new QuestionOpen({ msgId: "q-tech-2" }),
     new QuestionOpen({ msgId: "q-tech-3" }),
-    new QuestionOpen({ msgId: "q-tech-4", maxSize: 100 }),
   ],
   design: [
-    new QuestionMultiSelect({
-      msgId: "q-design-1",
-      optionsKeyboard: [
-        ["ux-ui", "web"],
-        ["art", "vector"],
-        ["smm", "photo"],
-      ],
-    }),
+    new QuestionOpen({ msgId: "q-design-1", }),
     new QuestionOpen({ msgId: "q-design-2", maxSize: 300 }),
     new QuestionOpen({ msgId: "q-design-3" }),
-  ],
-  media: [
-    new QuestionOpen({ msgId: "q-media-1", maxSize: 300 }),
-    new QuestionOpen({ msgId: "q-media-2" }),
-    new QuestionOpen({ msgId: "q-media-3" }),
+    new QuestionOpen({ msgId: "q-design-4" }),
   ],
   management: [
     new QuestionOpen({ msgId: "q-management-1" }),
     new QuestionOpen({ msgId: "q-management-2" }),
     new QuestionOpen({ msgId: "q-management-3" }),
     new QuestionOpen({ msgId: "q-management-4" }),
-    new QuestionOpen({ msgId: "q-management-5" }),
   ],
 };
 

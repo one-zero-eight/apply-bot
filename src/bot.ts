@@ -6,7 +6,7 @@ import { parseMode } from "grammy-parse-mode";
 import { conversations } from "grammy-conversations";
 import { RedisAdapter } from "grammy-storage-adapter-redis";
 import { apiThrottler } from "grammy-transformer-throttler";
-import { type Ctx, SessionData } from "./types.ts";
+import { type Ctx, LocaleId, SessionData } from "./types.ts";
 import { config } from "./config.ts";
 import { i18nMiddleware } from "./plugins/i18n.ts";
 import { o12tMiddleware } from "./plugins/o12t.ts";
@@ -59,6 +59,11 @@ bot.use(session({
     // store candidate application per user
     getSessionKey: (ctx) => `candappl:${ctx.from?.id?.toString() ?? ""}`,
     initial: getInitialCandidateCnvData,
+  },
+  language: {
+    storage: redisStorage as StorageAdapter<SessionData["language"]>,
+    getSessionKey: (ctx) => `language:${ctx.from?.id?.toString() ?? ""}`,
+    initial: () => undefined as LocaleId | undefined,
   },
   // storage for conversations plugin
   conversation: {

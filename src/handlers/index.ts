@@ -1,6 +1,6 @@
 import { Composer } from "grammy";
 import { type Ctx } from "@/types.ts";
-import { startCmd, startMenu } from "./commands/start.ts";
+import { languageMenu, startCmd, startMenu } from "./commands/start.ts";
 import { helpCmd } from "./commands/help.ts";
 import { profileCmd } from "./commands/profile.ts";
 import { unknownCmd } from "./commands/unknown.ts";
@@ -12,6 +12,7 @@ import {
 export const handlers = new Composer<Ctx>();
 
 handlers.use(startMenu);
+handlers.use(languageMenu);
 
 const pm = handlers.filter((ctx) => ctx.chat?.type === "private");
 
