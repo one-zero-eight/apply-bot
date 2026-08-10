@@ -1,5 +1,5 @@
 include:
-  - compose.yaml
+  - server-compose.yaml
 
 services:
   redis:
