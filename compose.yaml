@@ -6,6 +6,9 @@ services:
       - redis
     env_file:
       - .env
+    environment:
+      REDIS_HOSTNAME: 'redis'
+      REDIS_PORT: 6379
 
   redis:
     # See more: https://hub.docker.com/_/redis
