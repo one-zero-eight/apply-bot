@@ -153,13 +153,9 @@ cnv_candidate-application =
       [one] Остался последний вопрос!
       *[other] Осталось ещё { $questionsRemain } простых вопросов.
     }
+  .summary-title = Вот твоя заявка:
   .summary =
-    Вот твоя заявка:
-    _________________________
-
     { $application }
-
-    _________________________
 
     📝 Проверь всё и подтверди отправку.
   .btn_submit-application = Отправить ✅

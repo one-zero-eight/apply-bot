@@ -3,7 +3,6 @@ import { createConversation } from "grammy-conversations";
 import type { Cnv, Ctx } from "@/types.ts";
 import { o12t } from "@/plugins/o12t.ts";
 import { i18nMiddleware } from "@/plugins/i18n.ts";
-import { escapeHtml } from "@/utils/html.ts";
 import { parseBotCommand } from "@/utils/parsing.ts";
 import { Options } from "@/forms/questions/multi-select.ts";
 import { type DepartmentId, departmentsIds, departmentsInfo } from "@/departments.ts";
@@ -13,6 +12,7 @@ import {
   QuestionOpen,
   QuestionSelect,
 } from "@/forms/questions/index.ts";
+import { formatApplicationMessages } from "@/utils/application-message.ts";
 
 const cnvId = "candidate-application";
 const msg = (id: string) => `cnv_${cnvId}.${id}`;
@@ -64,8 +64,9 @@ const flowQuestions = {
     printSelectedOption: false,
     getMessageOptions: (cnv, ctx) => {
       const application = cnv.session.candidateCnv.application;
+      const messages = renderApplicationMessagesForReview(application, ctx);
       return {
-        application: renderApplicationForReview(application, ctx),
+        application: messages[messages.length - 1] ?? "",
       };
     },
   }),
@@ -179,7 +180,10 @@ export interface CandidateApplication {
   telegramId: number;
   telegramUsername: string;
   name: string;
-  generalQa: [string, string][];
+  nameQuestion: string;
+  beforeDepartmentsQa: [string, string][];
+  afterDepartmentsQa: [string, string][];
+  departmentsQaSectionTitle: string;
   selectedDepartments: DepartmentId[];
   departmentsQa: {
     [D in DepartmentId]?: [string, string][];
@@ -480,6 +484,15 @@ const steps: StepsDefinition<CandidateApplicationStep> = {
   },
   "confirming-submission": {
     handler: async (cnv, ctx) => {
+      const reviewMessages = renderApplicationMessagesForReview(
+        cnv.session.candidateCnv.application,
+        ctx,
+      );
+      // Send overflow chunks first; the last chunk goes into the confirm message.
+      for (const part of reviewMessages.slice(0, -1)) {
+        await ctx.reply(part, { link_preview_options: { is_disabled: true } });
+      }
+
       const answer = await flowQuestions.confirmSubmission.ask(cnv, ctx);
       switch (answer) {
         case "submit": {
@@ -504,7 +517,10 @@ const steps: StepsDefinition<CandidateApplicationStep> = {
             telegramId: ctx.from?.id ?? -1,
             telegramUsername: ctx.from?.username ?? "",
             name: data.name ?? "—",
-            generalQa: [...qa1, ...qa2],
+            nameQuestion: ctx.t(flowQuestions.name.msgId),
+            beforeDepartmentsQa: qa1,
+            afterDepartmentsQa: qa2,
+            departmentsQaSectionTitle: ctx.t("departments-qa"),
             selectedDepartments: data.selectedDepartments ?? [],
             departmentsQa: convertDepartmentsQa(data.departmentsQa, ctx),
           };
@@ -715,89 +731,58 @@ function convertDepartmentsQa(
   );
 }
 
-function renderApplicationForReview(
+function renderApplicationMessagesForReview(
   application: SessionData["application"],
   ctx: Ctx,
-): string {
-  // Filter Q&As only for selected departments
-  const depsQa = Object.keys(application.departmentsQa)
-    .filter((key) =>
-      (application.selectedDepartments ?? []).includes(key as DepartmentId)
-    )
-    .reduce((obj, key) => {
-      obj[key as DepartmentId] = application.departmentsQa[key as DepartmentId];
-      return obj;
-    }, {} as SessionData["application"]["departmentsQa"]);
-
-  const strAns = (s: string | null | undefined) => {
-    let out;
-    if (s == null) {
-      out = "—";
-    } else {
-      out = escapeHtml(s);
-      // TODO: it may contain HTML escape sequence like "&amp;"
-      //       and therefore will be cutted improperly
-      if (out.length > 110) {
-        out = out.slice(0, 50) + "<tg-spoiler>………</tg-spoiler>" +
-          out.slice(-50);
-      }
-    }
-    return `&gt; <i>${out}</i>`;
-  };
-
-  let parts: string[] = [];
-
-  // Name
-  parts.push(
-    `<b>${ctx.t(flowQuestions.name.msgId)}</b>\n${strAns(application.name)}`,
-  );
-
-  // Before departments Q&A
-  parts = parts.concat(beforeDepartmentsQuestions.map((q, i) => {
-    const answer = application.beforeDepartmentsQa[i];
-    const qStr = ctx.t(q.msgId);
-    const a = answer == null ? null : q.stringifyAnswer(
-      // deno-lint-ignore no-explicit-any
-      answer as any,
-      ctx,
-    );
-
-    return `<b>${qStr}</b>\n${strAns(a)}`;
-  }));
-
-  parts.push(`<b>${ctx.t("departments-qa")}</b>`);
-
-  // Departments Q&A
-  for (const [id_, answers] of Object.entries(depsQa)) {
-    const id = id_ as DepartmentId;
-    const depName = departmentsInfo[id].displayName;
-    parts = parts.concat(departmentsQuestions[id].map((q, i) => {
+): string[] {
+  const selected = application.selectedDepartments ?? [];
+  const departmentsQa = selected.map((id) => {
+    const answers = application.departmentsQa[id] ?? [];
+    const qa = departmentsQuestions[id].map((q, i) => {
       const answer = answers[i];
-      const qStr = ctx.t(q.msgId);
-      const a = answer == null ? null : q.stringifyAnswer(
+      const a = answer == null ? "—" : q.stringifyAnswer(
         // deno-lint-ignore no-explicit-any
         answer as any,
         ctx,
       );
+      return [ctx.t(q.msgId), a] as [string, string];
+    });
+    return {
+      departmentName: departmentsInfo[id].displayName,
+      qa,
+    };
+  });
 
-      return `<b>${depName} — ${i + 1}. ${qStr}</b>\n${strAns(a)}`;
-    }));
-  }
+  const stringify = (
+    questions: Question[],
+    answers: (Answer | undefined)[],
+  ): [string, string][] =>
+    questions.map((q, i) => {
+      const answer = answers[i];
+      const a = answer == null ? "—" : q.stringifyAnswer(
+        // deno-lint-ignore no-explicit-any
+        answer as any,
+        ctx,
+      );
+      return [ctx.t(q.msgId), a];
+    });
 
-  // After departments Q&A
-  parts = parts.concat(afterDepartmentsQuestions.map((q, i) => {
-    const answer = application.afterDepartmentsQa[i];
-    const qStr = ctx.t(q.msgId);
-    const a = answer == null ? null : q.stringifyAnswer(
-      // deno-lint-ignore no-explicit-any
-      answer as any,
-      ctx,
-    );
-
-    return `<b>${qStr}</b>\n${strAns(a)}`;
-  }));
-
-  return parts.join("\n\n");
+  return formatApplicationMessages(
+    `${ctx.t(msg("summary-title"))}\n\n`,
+    {
+      nameQa: [ctx.t(flowQuestions.name.msgId), application.name ?? "—"],
+      beforeDepartmentsQa: stringify(
+        beforeDepartmentsQuestions,
+        application.beforeDepartmentsQa,
+      ),
+      departmentsQaSectionTitle: ctx.t("departments-qa"),
+      departmentsQa,
+      afterDepartmentsQa: stringify(
+        afterDepartmentsQuestions,
+        application.afterDepartmentsQa,
+      ),
+    },
+  );
 }
 
 const submitters: CandidateApplicationSubmitter[] = [

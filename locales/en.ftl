@@ -153,13 +153,9 @@ cnv_candidate-application =
       [one] And the last question!
       *[other] Last { $questionsRemain } simple questions.
     }
+  .summary-title = Here is your application:
   .summary =
-    Here is your application:
-    _________________________
-
     { $application }
-
-    _________________________
 
     📝 Please, check everything and confirm submission.
   .btn_submit-application = Submit ✅

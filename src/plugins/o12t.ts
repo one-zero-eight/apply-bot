@@ -8,6 +8,7 @@ import { CandidateApplication } from "@/handlers/conversations/application.ts";
 import { RichText, RichTextText } from "@/notion/types.ts";
 import { bot } from "../bot.ts";
 import { escapeHtml } from "../utils/html.ts";
+import { formatApplicationMessages } from "@/utils/application-message.ts";
 
 const notionMembersDbSchema = {
   "Active": "checkbox",
@@ -132,33 +133,30 @@ export class O12t<C extends Context> {
       );
     }
 
-    // Send application to the applications chat
-    const formattedApplication = `
-<b>New candidate application</b>
+    // Send application to the applications chat (split between Q&A blocks).
+    const telegramHandle = application.telegramUsername
+      ? `@${application.telegramUsername}`
+      : "—";
+    const departments = application.selectedDepartments
+      .map((d) => departmentsInfo[d].displayName)
+      .join(", ");
+    const header = `<b>New candidate application</b>
 Name: <i>${escapeHtml(application.name)}</i>
-Telegram: @${application.telegramUsername} (ID: ${application.telegramId})
-Departments: <i>${
-      application.selectedDepartments.map((d) => departmentsInfo[d].displayName).join(
-        ", ",
-      )
-    }</i>
+Telegram: ${telegramHandle} (ID: ${application.telegramId})
+Departments: <i>${escapeHtml(departments)}</i>
 
-<b>Common QA:</b>
-${
-      application.generalQa.map(([q, a]) => `${escapeHtml(q)}\n${escapeHtml(a)}`).join(
-        "\n\n",
-      )
-    }
-
-<b>Departments QA:</b>
-${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
 `;
-    // Split the message into chunks of 4000 characters
-    for (let i = 0; i < formattedApplication.length / 4000; i++) {
-      await bot.api.sendMessage(
-        config.APPLICATIONS_CHAT_TELEGRAM_ID,
-        formattedApplication.slice(i * 4000, (i + 1) * 4000),
-      );
+    const messages = formatApplicationMessages(header, {
+      beforeDepartmentsQa: application.beforeDepartmentsQa,
+      departmentsQaSectionTitle: application.departmentsQaSectionTitle,
+      departmentsQa: application.selectedDepartments.map((id) => ({
+        departmentName: departmentsInfo[id].displayName,
+        qa: application.departmentsQa[id] ?? [],
+      })),
+      afterDepartmentsQa: application.afterDepartmentsQa,
+    });
+    for (const message of messages) {
+      await bot.api.sendMessage(config.APPLICATIONS_CHAT_TELEGRAM_ID, message);
     }
 
     const departmentsQaFormatted = formatCandidateApplicationDepartmentsQa(
@@ -197,7 +195,11 @@ ${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
             : "",
         },
         "Common QA": {
-          rich_text: formatQa(application.generalQa),
+          rich_text: formatQa([
+            [application.nameQuestion, application.name],
+            ...application.beforeDepartmentsQa,
+            ...application.afterDepartmentsQa,
+          ]),
         },
         "Departments": {
           multi_select: application.selectedDepartments
@@ -216,7 +218,11 @@ ${stringifyCandidateApplicationDepartmentsQa(application.departmentsQa)}
       name: application.name,
       telegramId: application.telegramId,
       telegramUsername: application.telegramUsername,
-      commonQa: application.generalQa.map(([q, a]) => `${q}\n${a}`).join("\n\n"),
+      commonQa: [
+        [application.nameQuestion, application.name],
+        ...application.beforeDepartmentsQa,
+        ...application.afterDepartmentsQa,
+      ].map(([q, a]) => `${q}\n${a}`).join("\n\n"),
       departments: Object.fromEntries(
         departmentsIds.map((d) => [d, application.selectedDepartments.includes(d)]),
       ) as {
@@ -400,7 +406,10 @@ function formatCandidateApplicationDepartmentsQa(
       .reduce((acc, id) => [
         ...acc,
         ...(qa[id]!.map(([q, a], i) =>
-          [`${departmentsInfo[id].displayName} Q${i + 1} — ${q}`, a] as [string, string]
+          [`${departmentsInfo[id].displayName} — ${i + 1}. ${q}`, a] as [
+            string,
+            string,
+          ]
         )),
       ], [] as [string, string][]),
   );
@@ -436,8 +445,8 @@ function stringifyCandidateApplicationDepartmentsQa(
     const depName = departmentsInfo[dep].displayName;
     for (let i = 0; i < depQa.length; i++) {
       const [question, answer] = depQa[i];
-      rows.push(`${depName} Q${i + 1} — ${question}`);
-      rows.push(escapeHtml(answer) + "\n");
+      rows.push(`${depName} — ${i + 1}. ${question}`);
+      rows.push(answer + "\n");
     }
   }
   return rows.join("\n");
