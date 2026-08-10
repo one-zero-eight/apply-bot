@@ -97,7 +97,7 @@ const departmentsQuestions: Record<DepartmentId, Question[]> = {
     new QuestionOpen({ msgId: "q-tech-3" }),
   ],
   design: [
-    new QuestionOpen({ msgId: "q-design-1", }),
+    new QuestionOpen({ msgId: "q-design-1" }),
     new QuestionOpen({ msgId: "q-design-2", maxSize: 300 }),
     new QuestionOpen({ msgId: "q-design-3" }),
     new QuestionOpen({ msgId: "q-design-4" }),

@@ -1,7 +1,7 @@
 {
   "lock": "deno.lock",
   "tasks": {
-    "lint": "deno lint && deno fmt --check && deno check ./src/run-lp.ts && deno check ./src/run-wh.ts"
+    "lint": "deno lint && deno fmt --check && deno check --allow-import ./src/run-lp.ts && deno check --allow-import ./src/run-wh.ts"
   },
   "imports": {
     "@/": "./src/",
